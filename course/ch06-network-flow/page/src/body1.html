@@ -1,0 +1,135 @@
+<div class="page">
+  <div class="topbar">
+    <span><b>物流调度与运筹优化</b> · 系统课程</span>
+    <span>第二部分 组合优化 · 第 6 章</span>
+  </div>
+
+  <div class="layout">
+    <nav class="toc" aria-label="本章目录">
+      <div class="toc-title">本章目录</div>
+      <ol>
+        <li><a href="#s1"><span>6.1</span><span>最短路与 Dijkstra</span></a></li>
+        <li><a href="#s2"><span>6.2</span><span>负费用、势与 Johnson</span></a></li>
+        <li><a href="#s3"><span>6.3</span><span>最大流与最小割</span></a></li>
+        <li><a href="#s4"><span>6.4</span><span>最小费用流</span></a></li>
+        <li><a href="#s5"><span>6.5</span><span>网络矩阵与整数性</span></a></li>
+        <li><a href="#s6"><span>6.6</span><span>多商品流</span></a></li>
+        <li><a href="#s7"><span>6.7</span><span>在项目里的位置</span></a></li>
+        <li><a href="#s8"><span>6.8</span><span>小结与 Lab</span></a></li>
+        <li><a href="#s9"><span>6.9</span><span>自测</span></a></li>
+      </ol>
+      <div class="toc-note">页面里的数字全部实时计算：最短路、增广路、逐次最短路、方子式行列式和 LP 都由页面内置代码求解，并与 Floyd、枚举割、SciPy 和 HiGHS 逐项对拍。</div>
+    </nav>
+
+    <main>
+      <!-- ============================================================ HERO -->
+      <section class="hero">
+        <div class="eyebrow">CHAPTER 06 · 组合优化</div>
+        <h1><span class="no">6</span>最短路与网络流：网络矩阵为什么不需要分支</h1>
+        <p class="sub">第 5 章的匈牙利算法里，已经出现了“最短路加一组价格”。这一章把它放回一般的网络：最短路、最大流、最小费用流是同一族问题，它们的约束矩阵全单模，所以 LP 直接给整数解。再看两种让这个性质消失的加法：共用限额，和多个商品共用一张网络。</p>
+        <div class="hero-grid">
+          <div class="card">
+            <h3>学完本章，你能</h3>
+            <ol class="goals">
+              <li>说出 Dijkstra 依赖的那条性质，判断一张网络该用 Dijkstra、Bellman–Ford 还是 Johnson，会用势把负费用改写成非负。</li>
+              <li>手写 Edmonds–Karp，解释残量图和回退弧，用最小割给最大流做证书。</li>
+              <li>手写逐次最短路的最小费用流，说明费用曲线为什么是凸的，并把指派和运输问题写成网络。</li>
+              <li>证明点弧关联矩阵全单模，判断给网络再加一行约束之后整数性还在不在；知道多商品流为什么需要分支。</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>本章信息</h3>
+            <dl class="meta">
+              <div><dt>用时</dt><dd>阅读与交互 80–110 分钟，Lab 3 小时左右</dd></div>
+              <div><dt>前置</dt><dd>第 1、2、5 章（LP、对偶价格、约化成本、全单模）。会读 Python 代码。</dd></div>
+              <div><dt>对拍</dt><dd><span class="mono" id="envline"></span>；本章的算法由页面内置代码实现，不依赖求解器。</dd></div>
+              <div><dt>配套</dt><dd>Lab 代码包：5 个练习 + 1 个挑战，含手写的最短路、最大流和最小费用流，pytest 自动判分</dd></div>
+            </dl>
+          </div>
+        </div>
+        <div class="roadmap" aria-label="课程路线">
+          <div><b>PART 1</b>数学规划基础</div>
+          <div class="now"><b>PART 2</b>组合优化</div>
+          <div><b>PART 3</b>调度理论</div>
+          <div><b>PART 4</b>路径与波次</div>
+          <div><b>PART 5</b>大规模方法</div>
+          <div><b>PART 6</b>启发式</div>
+          <div><b>PART 7</b>多智能体时空规划</div>
+          <div><b>PART 8</b>动态与不确定</div>
+        </div>
+        <div class="roadmap-cap">第二部分 组合优化：指派问题与匈牙利算法 → <b>最短路与网络流（本章）</b>→ 带容量的指派与背包 → 旅行商与车辆路径入门。</div>
+      </section>
+
+      <!-- ============================================================ 6.1 -->
+      <section class="chap" id="s1">
+        <h2 class="sec"><span class="no">6.1</span>最短路与 Dijkstra</h2>
+        <p class="lead">第 5 章每插入一个任务，都在“约化成本”上跑一次 Dijkstra，然后涨价。当时把它当成匈牙利算法的一个零件。它其实是一个独立的、更一般的工具：在一张有向网络上，找一个点到所有点的最短路。</p>
+        <p>本章从一张 6 个点的小网络开始，它会在后面每一节出现：S 是源点，T 是汇点，a、b、c、d 是中间站。每条弧有两个数，容量和费用。这一节只用费用（图上弧旁边的数字），把它想成行驶时间。</p>
+        <p>最短路的问题很朴素：<b>从 S 出发，到每个点的最短距离是多少，沿哪条路走？</b>Dijkstra 的做法是给每个点维护一个标签（目前找到的最短距离），每一步取标签最小、还没有“确定”的点，把它确定下来，再用它去改进邻点的标签。</p>
+
+        <div class="formula one">
+          <span class="k">松弛</span><span class="e"><i>d</i>(<i>v</i>) ← min( <i>d</i>(<i>v</i>), <i>d</i>(<i>u</i>) + <i>c</i><sub>uv</sub> )</span><span class="n">用点 u 的标签去试着改进邻点 v</span>
+        </div>
+
+        <p>数组版每一步扫描全部点找最小标签，共 <span class="m">n</span> 步，总共 <span class="m">O</span>(<span class="m">n</span><sup>2</sup> + <span class="m">m</span>)；用堆可以降到 <span class="m">O</span>(<span class="m">m</span> log <span class="m">n</span>)。第 5 章的 <code>insert</code> 用的就是数组版。</p>
+        <p>算法能成立，靠的是一句话：<b>取出来的点，它的标签已经是最终答案，以后不会再改。</b>理由是，任何还没确定的点，标签都不小于当前这个点；从它们出发再走一段，只会更长。这句话有一个前提：走一段不会变短，也就是所有费用非负。</p>
+
+        <div class="predict" id="p1"></div>
+
+        <figure class="fig wide gatehost" id="fig1">
+          <div class="fig-body">
+            <div class="fig-toolbar">
+              <span class="label">网络</span>
+              <div class="seg" id="spKind" role="group" aria-label="网络的三个版本"></div>
+              <span class="label">算法</span>
+              <div class="seg" id="spAlgo" role="group" aria-label="算法"></div>
+            </div>
+            <div class="netwrap">
+              <div>
+                <svg class="net" id="net1" role="img" aria-label="6 个点的网络：弧上的数字是费用"></svg>
+                <div class="lgd"><span><i></i>已确定的最短路树</span><span><i class="hot"></i>这一步改进了标签</span><span><i class="cut"></i>被跳过或在负环上</span></div>
+                <div class="stepper">
+                  <button class="btn" id="spPrev" type="button">◀ 上一步</button>
+                  <button class="btn primary" id="spNext" type="button">下一步 ▶</button>
+                  <button class="btn ghost" id="spAll" type="button">跑到底</button>
+                  <button class="btn ghost" id="spReset" type="button">重来</button>
+                  <span class="txt" id="spTxt"></span>
+                </div>
+              </div>
+              <div>
+                <div class="flags" id="spFlags"></div>
+                <div class="tbl-wrap"><table class="lbt" id="spTable" aria-label="每个点的标签"></table></div>
+                <div class="saybox" id="spSay"></div>
+              </div>
+            </div>
+          </div>
+          <figcaption><b>图 6-1</b>最短路。弧上的数字是费用，点旁边是当前标签。选算法，一步步看标签怎么被改进；换网络，看负费用弧和负环怎么让算法出错或报警。“正确值”一列来自 Bellman–Ford。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>先选“原网络”和 Dijkstra。</b>S 确定后，a 和 b 的标签都变成 2；确定 b 时 d 得到 3；d 确定之后 T 得到 7。c 先从 a 得到 5，b→c 给的是 6，不比 5 小，所以没有变。最后 S 到 T 的最短距离是 7，路径 S→b→d→T。</p>
+        <p><b>再换成“加一条 c→b（−4）”。</b>这条新弧从 c 回到 b，费用是负的：从 c 走到 b 不但不花时间，还“省”了 4。真正的最短路是 S→a→c→b→d→T，费用 2 + 3 − 4 + 1 + 4 = 6。Dijkstra 在确定 b 的时候，c 还没有出现；等 c 被确定，它想把 b 从 2 改成 1，但 b 已经确定了，Dijkstra 不回头。最后给出的是 7，比正确答案 6 多了 1，而且没有任何报错。</p>
+        <p>这种“悄悄给错”是这一节最想让你记住的事。用 Dijkstra 之前，先确认费用非负，Lab 练习 1 要求负费用时直接抛出异常。</p>
+      </section>
+
+      <!-- ============================================================ 6.2 -->
+      <section class="chap" id="s2">
+        <h2 class="sec"><span class="no">6.2</span>负费用、势与 Johnson</h2>
+        <p class="lead">费用真的可能是负的吗？在物流里比较少见，但把别的问题翻译成网络时经常出现：回程带货可以抵消一部分成本，最小费用流的残量图里，回退弧的费用就是原来的相反数。</p>
+
+        <h3 class="sub">Bellman–Ford：不依赖“确定”</h3>
+        <p>Bellman–Ford 不做“确定”，每一轮把<b>所有弧</b>各松弛一遍。理由是，最短路至多有 <span class="m">n</span> − 1 条弧，所以 <span class="m">n</span> − 1 轮之后，所有标签都应该是最终值。代价是 <span class="m">O</span>(<span class="m">n m</span>)，比 Dijkstra 慢，但对费用的符号没有要求。</p>
+        <p>它还有一个副产品：<b>负环检测</b>。跑完 <span class="m">n</span> − 1 轮之后再松弛一轮，如果还有标签变小，说明有一个环越绕越短，最短路不存在。沿前驱指针回走 <span class="m">n</span> 步，一定落在这个环上，把它读出来就是证据。在图 6-1 里选“把 c→b 改成 −6”，再切到 Bellman–Ford，跑到最后一步看看。</p>
+
+        <h3 class="sub">Johnson：用势把负费用改写成非负</h3>
+        <p>如果要从很多个点出发求最短路，每次都跑 Bellman–Ford 太贵。Johnson 的想法是：给每个点一个数 <span class="m">h</span>(<span class="m">v</span>)，称为<b>势</b>，把每条弧的费用改成</p>
+        <div class="formula one">
+          <span class="k">约化成本</span><span class="e"><i>c</i>′<sub>uv</sub> = <i>c</i><sub>uv</sub> + <i>h</i>(<i>u</i>) − <i>h</i>(<i>v</i>)</span><span class="n">势是各点的一个数，与走哪条路无关</span>
+        </div>
+        <p>任何一条从 <span class="m">s</span> 到 <span class="m">t</span> 的路，新费用之和是原来的费用加上 <span class="m">h</span>(<span class="m">s</span>) − <span class="m">h</span>(<span class="m">t</span>)，中间的项全部抵消。所以<b>每条 s 到 t 的路都平移同样的量，最短路不变</b>。这时只要能找到一组势，让所有 <span class="m">c</span>′ ≥ 0，就可以在新费用上用 Dijkstra，最后再把距离还原。</p>
+        <p>这组势怎么找？加一个虚拟源点，向每个点连一条费用 0 的弧，跑一次 Bellman–Ford，取虚拟源到每个点的最短距离作为 <span class="m">h</span>。最短距离满足 <span class="m">h</span>(<span class="m">v</span>) ≤ <span class="m">h</span>(<span class="m">u</span>) + <span class="m">c</span><sub>uv</sub>，这正是 <span class="m">c</span>′ ≥ 0。有负环时，这一步就发现了，势不存在。</p>
+        <p>如果你读过第 5 章，这里应该觉得眼熟。匈牙利算法里，任务价格 <span class="m">u</span>、车价格 <span class="m">v</span>，约化成本 <span class="m">c</span> + <span class="m">v</span> − <span class="m">u</span> ≥ 0，等于 0 的边叫紧边，Dijkstra 在约化成本上跑，跑完涨价。那些价格就是这里的势。<b>势就是网络上的对偶变量</b>，本章 6.4 会看到它出现在最小费用流的最优性证书里。</p>
+        <p>在图 6-1 里选“加一条 c→b（−4）”和 Johnson，走完全部步骤：h = (0, 0, −4, 0, −3, 0) 之后，b→c、b→d、c→b 三条弧的新费用都是 0，其余都为正，Dijkstra 在新费用上不会再出错。</p>
+
+        <div class="callout key"><b class="t">什么时候用哪个</b>费用全部非负：Dijkstra。有负费用但没有负环：Bellman–Ford（单源），或 Johnson（多源，先付一次 Bellman–Ford 的钱）。有负环：先弄清这个环代表什么。物流网络里出现负环，多半说明建模有误，比如把“收益”和“成本”的符号弄反了。</div>
+      </section>

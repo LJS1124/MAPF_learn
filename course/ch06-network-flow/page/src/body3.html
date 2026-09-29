@@ -1,0 +1,159 @@
+
+      <!-- ============================================================ 6.6 -->
+      <section class="chap" id="s6">
+        <h2 class="sec"><span class="no">6.6</span>多商品流：网络被多种货物共用</h2>
+        <p class="lead">前面所有问题里，货物都是一种：流到 T 的量不区分是谁的。实际调度里往往有好几辆车、好几种货，每个有自己的起点和终点，却要共用同一张网络的通道。</p>
+        <p><b>多商品流</b>：有 <span class="m">K</span> 种商品，商品 <span class="m">k</span> 要从 <span class="m">s</span><sub class="m">k</sub> 送到 <span class="m">t</span><sub class="m">k</sub>。每种商品各自满足流量守恒，但<b>所有商品共用弧的容量</b>：一条弧上各商品的流量之和不超过容量。</p>
+        <p>单独看每一种商品，它就是一个网络流；合在一起，变量 <span class="m">x</span><sup class="m">k</sup><sub class="m">e</sub> 既出现在自己的守恒行里，又出现在共享的容量行里。一列不再是“一个 +1 一个 −1”，整数性的证明失效了。这是问题本身变难了，与写法无关。</p>
+
+        <figure class="fig wide" id="fig5">
+          <div class="fig-body">
+            <div class="fig-toolbar">
+              <div class="seg" id="xcMode" role="group" aria-label="显示 LP 的解或自己选整数方案"></div>
+              <label class="chk"><input type="checkbox" id="xcTwo"> 只保留商品 1 和 2</label>
+            </div>
+            <div class="statrow" id="xcStats"></div>
+            <div class="mcwrap">
+              <div>
+                <svg class="mc" id="xcSvg" role="img" aria-label="三个商品、两个三角形"></svg>
+                <div class="lgd"><span style="color:var(--accent)">商品 1</span><span style="color:var(--hot-strong)">商品 2</span><span style="color:var(--good)">商品 3</span><span>虚线 = 每个商品只走 ½</span><span>弧上的数字：载荷/容量</span></div>
+              </div>
+              <div>
+                <div class="chips" id="xcSel" style="display:grid;gap:8px;margin-bottom:12px"></div>
+                <div class="tbl-wrap"><table class="pick" id="xcPick" aria-label="所有整数方案"></table></div>
+                <div class="saybox" id="xcSay"></div>
+              </div>
+            </div>
+          </div>
+          <figcaption><b>图 6-5</b>三个商品，两个三角形，每条三角形的弧容量为 1。商品 <span class="m">k</span> 从 S<sub>k</sub> 进入任一三角形的 v<sub>k</sub>（或 w<sub>k</sub>），沿两条弧走到 v<sub>k+2</sub>（或 w<sub>k+2</sub>），再去 T<sub>k</sub>。LP 由页面内置单纯形法求解，整数方案由枚举得到（每个商品的路径只有两条），并用 HiGHS 核对过：LP 值 6，整数无解。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>LP 说可以，整数说不行。</b>三个商品各自有两个选择（走三角形 1 或 2），共 8 种整数方案，页面右边的表列出了全部，没有一种可行。原因很短：商品 <span class="m">k</span> 用三角形里的两条弧，商品 <span class="m">k</span> + 1 用另外两条，三条弧里必有一条被两个商品同时占用。所以一个三角形里至多放一个商品，两个三角形至多放两个，三个商品放不下。</p>
+        <p>LP 可以让每个商品在两个三角形里各走一半。每条三角形的弧上恰有两个商品，各占 ½，载荷 1，刚好满。费用 6 就是这个半整数点。勾选“只保留商品 1 和 2”，整数解立即出现（一个商品一个三角形），LP 和整数一样是 4。</p>
+        <p>这与 5.5 节的“奇圈”是同一个现象：三个东西两两冲突，LP 让每个占一半，整数只能放下其中一部分。三个东西两两冲突，就是图里的一个三角形（奇圈）。</p>
+
+        <h3 class="sub">为什么这件事重要</h3>
+        <p>多商品流的整数版本是 NP 难的（Even、Itai、Shamir，1976），LP 松弛通常有分数解，需要分支和割。把它带到第七部分，会看到一个直接的翻译：<b>每辆车是一种商品</b>，网络是“位置 × 时间”展开的时空网络，弧容量和点容量 1 表示同一时刻同一位置只能有一辆车。单辆车自己的最优路线，是时空网络上的一次最短路（6.1 节）；多辆车放在一起，就是一个多商品流，而且要求整数。这就是多智能体路径规划（MAPF）难的根源，也是那一部分用冲突搜索（CBS）而不是一次 LP 的原因。</p>
+        <div class="callout key"><b class="t">为什么不能“一辆一辆规划”</b>如果把每种商品依次当成单商品流来解，后一个商品在前一个商品剩下的容量上走，每一步都是整数、都是最优，但合起来未必最优，甚至可能无解。三个商品的例子里，前两个商品各占一个三角形，第三个商品没有路可走。第 26 章的优先级规划正是这样，它的“不完备”就来自这里。</div>
+      </section>
+
+      <!-- ============================================================ 6.7 -->
+      <section class="chap" id="s7">
+        <h2 class="sec"><span class="no">6.7</span>在项目里的位置</h2>
+        <p class="lead">这一章的三个算法在四向车与提升机的系统里各有位置。判断该用哪个，先问自己：要回答的是“怎么走”、“最多能送多少”，还是“怎么送最省”？</p>
+        <div class="theorems">
+          <div class="thm"><div class="tn">怎么走：最短路</div><p>一辆车从当前位置到目标，在栅格图上的最优路线。费用可以是时间、能耗，或者叠加了拥堵惩罚。惩罚为负（“鼓励走某条通道”）时，先检查有没有负环。第 13 章会把它推广到 A* 和栅格图上的启发函数。</p></div>
+          <div class="thm"><div class="tn">最多送多少：最大流与最小割</div><p>一个波次的时间窗里，提升机、月台、主巷道各自的容量限制，网络最多放行多少。最小割指出瓶颈在哪里。第 16 章的发运波次要和月台、车辆容量耦合，这一层的估算给了上界。</p></div>
+          <div class="thm"><div class="tn">怎么送最省：最小费用流</div><p>多车多任务的分配（第 5 章）、库位间的调拨、多个出入口的分流。任务在到达前后有不同的单价，就是把边际成本曲线（图 6-3）用在决策上。</p></div>
+        </div>
+        <h3 class="sub">两个建模技巧</h3>
+        <p><b>点的容量：拆点。</b>提升机一次只能载一辆车，这是点的限制，而网络流只认弧容量。把点 v 拆成入口 v<sub>in</sub> 和出口 v<sub>out</sub>，中间连一条容量为 1 的弧，所有进入 v 的弧接到 v<sub>in</sub>，所有离开 v 的弧从 v<sub>out</sub> 出发。点容量因此变成弧容量，矩阵仍是全单模（图 6-4 里“点 c 的容量”那一行已经验证过）。Lab 练习 4 里有这个变换。</p>
+        <p><b>时间展开：把时间变成网络的一个方向。</b>把网络复制 <span class="m">T</span> 份，每份代表一个时刻，位置 p 在时刻 t 的点记为 (p, t)；从 (p, t) 到 (q, t+1) 的弧表示这一步从 p 移到 q（要求 p、q 相邻），从 (p, t) 到 (p, t+1) 的弧表示原地等待。之后“在 T 步内把这些货送到”就是这张展开网络上的最大流问题，“最快到达”是最短路。只要不关心具体是哪辆车，它仍然是<b>单商品</b>问题，整数性保证成立。一旦要区分车，就是 6.6 节的多商品流。</p>
+        <p>这个区别对设计很重要：<b>“最多能放行多少辆车”是容易的（多项式，整数），“每辆车走哪条路且互不冲突”是困难的</b>。系统里先用前者估容量、判断窗口是否可行，再用第七部分的方法解后者。</p>
+      </section>
+
+      <!-- ============================================================ 6.8 -->
+      <section class="chap" id="s8">
+        <h2 class="sec"><span class="no">6.8</span>小结与 Lab</h2>
+        <ol class="takeaways">
+          <li>Dijkstra 靠“确定的点不再改”，这要求费用非负；遇到负费用它不报错，只是悄悄给错答案。Bellman–Ford 每轮松弛全部弧，能处理负费用，第 <span class="m">n</span> 轮还能松弛就是有负环。</li>
+          <li>势 <span class="m">h</span> 把费用改成 <span class="m">c</span> + <span class="m">h</span>(<span class="m">u</span>) − <span class="m">h</span>(<span class="m">v</span>)，所有 s 到 t 的路平移同样的量，最短路不变。Johnson 用它把负费用改成非负；它与第 5 章的价格是同一个东西。</li>
+          <li>最大流靠残量图上的增广路，回退弧允许撤销之前的决定；选边数最少的路（Edmonds–Karp）时间为 <span class="m">O</span>(<span class="m">n m</span><sup>2</sup>)。最大流 = 最小割，割是证书，也指出该给哪几条弧扩容。</li>
+          <li>最小费用流用逐次最短路加势求解，每一轮是残量图上的一次 Dijkstra。路长单调不降，所以费用曲线是凸的，边际成本等于当前最短路的长度。指派和运输都是它的特例，第 5 章的改派链就是残量图上的增广路。最优性条件：残量图没有负环，也就是存在一组可行的势。</li>
+          <li>点弧关联矩阵的每一列有一个 +1 和一个 −1，所以全单模。任何整数容量和需求下，LP 的顶点是整数，网络流不需要分支；对偶变量（势）也是整数。</li>
+          <li>网络里可以放心加：弧的上下界、点容量（拆点）、超级源汇。不能加：把首尾相接的两条弧绑进同一个限额，这会让 LP 出现分数解，要靠分支切割。</li>
+          <li>多商品流让多种货物共用容量，整数性消失，整数版本 NP 难。三个商品、两个三角形的例子里，LP 值 6，整数无解。多辆车的时空规划是它的一个实例，这是第七部分不再指望 LP 的原因。</li>
+        </ol>
+
+        <h3 class="sub">这一章在你的课题里的位置</h3>
+        <p>派车窗口里的分配用第 5 章的增量匈牙利，它是本章最小费用流的特例。单辆车的路线在时空栅格上求最短路，这是第 13 章 A* 和第 26 章时空 A* 的起点。窗口是否装得下，用最大流粗筛，最小割告诉你瓶颈在提升机、主巷道还是月台。</p>
+        <p>本章的“可以”和“不可以”是一条分界线。分配、单车路径、放行能力都在“可以”一侧，用多项式算法就能精确求解，值得写成独立、可验证的模块。同时考虑多车路线冲突，就跨到了“不可以”一侧，需要下一章开始的分支切割，以及第七部分的专用算法。</p>
+
+        <h3 class="sub">术语表</h3>
+        <div class="tbl-wrap">
+          <table class="gloss">
+            <thead><tr><th>中文</th><th>English</th><th>在本章的含义</th></tr></thead>
+            <tbody>
+              <tr><td>松弛</td><td>relaxation</td><td>用 d(u) + c 尝试改进 d(v)</td></tr>
+              <tr><td>负环</td><td>negative cycle</td><td>总费用为负的环，最短路不存在</td></tr>
+              <tr><td>势、约化成本</td><td>potential, reduced cost</td><td>每个点的一个数 h；c + h(u) − h(v)。最短路不变，用来把负费用改成非负</td></tr>
+              <tr><td>流、流量守恒</td><td>flow, conservation</td><td>每条弧的流量；除源汇外每个点流入等于流出</td></tr>
+              <tr><td>残量图</td><td>residual graph</td><td>每条弧对应前向残量和回退弧</td></tr>
+              <tr><td>增广路、瓶颈</td><td>augmenting path, bottleneck</td><td>残量图里 S 到 T 的路；路上最小的残量</td></tr>
+              <tr><td>割、最小割</td><td>cut, minimum cut</td><td>把点分成含 S 和含 T 两侧，割边容量之和；容量最小的割</td></tr>
+              <tr><td>最大流最小割定理</td><td>max-flow min-cut theorem</td><td>最大流量 = 最小割的容量</td></tr>
+              <tr><td>逐次最短路</td><td>successive shortest paths</td><td>每轮在残量图上找最短路并推流的最小费用流算法</td></tr>
+              <tr><td>边际成本</td><td>marginal cost</td><td>多送一个单位的价格，等于当前最短增广路的长度</td></tr>
+              <tr><td>循环取消</td><td>cycle canceling</td><td>沿残量图里的负环推流，直到没有负环</td></tr>
+              <tr><td>点弧关联矩阵</td><td>node-arc incidence matrix</td><td>每列一个 +1 一个 −1，全单模</td></tr>
+              <tr><td>拆点</td><td>node splitting</td><td>把点容量变成弧容量</td></tr>
+              <tr><td>多商品流</td><td>multicommodity flow</td><td>多种货物共用弧容量，整数版本 NP 难</td></tr>
+              <tr><td>时间展开网络</td><td>time-expanded network</td><td>把每个时刻的位置当成一个点，等待和移动是弧</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="sub">对照教材</h3>
+        <ul class="refs">
+          <li>Ahuja、Magnanti、Orlin，<em>Network Flows: Theory, Algorithms, and Applications</em>（Prentice Hall，1993）：第 4–5 章最短路，第 6–7 章最大流，第 9–10 章最小费用流。本章的算法都在这里，还有证明和复杂度的完整分析。</li>
+          <li>Cormen、Leiserson、Rivest、Stein，<em>Introduction to Algorithms</em>（第 4 版）：第 22 章单源最短路（Dijkstra、Bellman–Ford），第 23 章全源最短路（Johnson），第 24 章最大流（Edmonds–Karp）。</li>
+          <li>Wolsey，<em>Integer Programming</em>（第 2 版，Wiley 2020）：第 3 章 Well-Solved Problems，网络矩阵与全单模。</li>
+          <li>Bertsimas &amp; Tsitsiklis，<em>Introduction to Linear Optimization</em>：第 7 章 Network flow problems，含网络单纯形法与整数性。</li>
+          <li>Dijkstra，“A note on two problems in connexion with graphs”（1959）；Bellman，“On a routing problem”（1958）；Ford，“Network flow theory”（1956）；Johnson，“Efficient algorithms for shortest paths in sparse networks”（J. ACM，1977）。</li>
+          <li>Ford &amp; Fulkerson，“Maximal flow through a network”（1956）；Edmonds &amp; Karp，“Theoretical improvements in algorithmic efficiency for network flow problems”（J. ACM，1972）；Dinic（1970）与 Goldberg &amp; Tarjan 的推进–重标记（1988）是更快的最大流算法。</li>
+          <li>Hoffman &amp; Kruskal，“Integral boundary points of convex polyhedra”（1956）：全单模与整数多面体。Even、Itai、Shamir，“On the complexity of timetable and multicommodity flow problems”（SIAM J. Computing，1976）：整数多商品流的复杂度。</li>
+        </ul>
+
+        <h3 class="sub">本章 Lab</h3>
+        <div class="lab">
+          <div class="lab-grid">
+            <div>
+              <p style="margin-top:0">代码包 <code>ch06-network-flow-lab.zip</code> 随本章一起发放。依赖是 numpy、scipy、pytest；判分用 Floyd 全源最短路、枚举全部割、<code>linprog</code> 求得的最小费用，以及对最优性证书的独立检查，不依赖你的代码。</p>
+              <table class="labt">
+                <thead><tr><th>练习</th><th>内容</th><th>对应</th></tr></thead>
+                <tbody>
+                  <tr><td>ex1</td><td><b>最短路</b>：Dijkstra（遇负费用抛异常）、Bellman–Ford（返回负环）、Johnson；先填 4 个预测</td><td>6.1–6.2</td></tr>
+                  <tr><td>ex2</td><td><b>最大流</b>：残量图、Edmonds–Karp 与随手选两种选路规则，同时返回最小割</td><td>6.3</td></tr>
+                  <tr><td>ex3</td><td><b>最小费用流</b>：逐次最短路加势，支持负费用，返回势作为最优性证书；费用曲线</td><td>6.4</td></tr>
+                  <tr><td>ex4</td><td>把指派写成网络并解出 124 s；点容量的拆点变换</td><td>6.4、6.7</td></tr>
+                  <tr><td>ex5</td><td>审 5 个 AI 写的最大流函数：不看源码，只靠运行结果归类问题</td><td>6.3</td></tr>
+                  <tr><td>挑战</td><td>循环取消：检测残量图里的负环，逐步降低费用，与逐次最短路对拍</td><td>6.4</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <pre>pip install -r requirements.txt
+pytest -q                     # 全部练习
+pytest tests/test_ex3.py -q   # 单个练习
+
+# 确认判分本身没问题：参考答案应当全部通过
+LAB_TARGET=solutions pytest -q</pre>
+              <p style="font-size:13.5px;color:var(--muted);margin:10px 0 0">练习 1 要求先在 <code>PREDICTION</code> 里写下预测再运行；跑完测试后，终端最后会把你的预测和实际结果并排列出来。</p>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="sub">下一章</h3>
+        <div class="next">
+          <div class="eyebrow">CHAPTER 07</div>
+          <h4>带容量的指派与背包</h4>
+          <p style="margin:0">本章的网络里，每条弧的容量互不相关，所以 LP 自带整数解。下一章遇到第一个例外：每辆车有载重上限、每个任务占用不同的量（广义指派），或者一个货位只能装下有限的体积（背包）。这时矩阵里出现了不是 0/1 的系数，全单模消失，LP 不再自带整数解，我们回到第 4 章的分支定界和割平面，看背包覆盖割怎样把 LP 拉回整数。</p>
+        </div>
+      </section>
+
+      <!-- ============================================================ 6.9 -->
+      <section class="chap" id="s9">
+        <h2 class="sec"><span class="no">6.9</span>自测</h2>
+        <p>8 道题，覆盖本章的全部要点。每题选完立即给出解析。</p>
+        <div class="quiz" id="quiz"></div>
+      </section>
+
+      <footer class="foot">
+        数据说明：本章的全部数字由页面内置的 Dijkstra、Bellman–Ford、Johnson、Edmonds–Karp、逐次最短路、单纯形法和枚举实时计算，并与 Floyd、枚举全部割、SciPy 的 <code>linprog</code> 和 HiGHS 的 MIP 逐项对拍（环境：<span id="envline2"></span>）：随机网络上的最短路距离、最大流量与最小割、每个整数流量的最小费用、全单模的行列式计数，都与 Lab 的判分数据同源。
+      </footer>
+    </main>
+  </div>
+</div>
+
+<div class="tip" id="tip" hidden></div>
