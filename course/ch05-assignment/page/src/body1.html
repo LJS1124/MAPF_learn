@@ -1,0 +1,203 @@
+<div class="page">
+  <div class="topbar">
+    <span><b>物流调度与运筹优化</b> · 系统课程</span>
+    <span>第二部分 组合优化 · 第 5 章</span>
+  </div>
+
+  <div class="layout">
+    <nav class="toc" aria-label="本章目录">
+      <div class="toc-title">本章目录</div>
+      <ol>
+        <li><a href="#s1"><span>5.1</span><span>任务陆续到达</span></a></li>
+        <li><a href="#s2"><span>5.2</span><span>一次插入的内部</span></a></li>
+        <li><a href="#s3"><span>5.3</span><span>代码与复杂度</span></a></li>
+        <li><a href="#s4"><span>5.4</span><span>全单模</span></a></li>
+        <li><a href="#s5"><span>5.5</span><span>加一行就失效</span></a></li>
+        <li><a href="#s6"><span>5.6</span><span>真实派车的变形</span></a></li>
+        <li><a href="#s7"><span>5.7</span><span>瓶颈与 Hall 证书</span></a></li>
+        <li><a href="#s8"><span>5.8</span><span>小结与 Lab</span></a></li>
+        <li><a href="#s9"><span>5.9</span><span>自测</span></a></li>
+      </ol>
+      <div class="toc-note">页面里的数字全部实时计算：增量匈牙利、方子式行列式、带约束的 LP、瓶颈阈值都由页面内置代码求解，并与 SciPy、HiGHS 和穷举逐项对拍。</div>
+    </nav>
+
+    <main>
+      <!-- ============================================================ HERO -->
+      <section class="hero">
+        <div class="eyebrow">CHAPTER 05 · 组合优化</div>
+        <h1><span class="no">5</span>指派问题与匈牙利算法：LP 为什么自带整数解</h1>
+        <p class="sub">第 2 章的涨价拍卖只讲了思路。这一章把它写成完整的算法：一次加一个任务，沿一条改派链调整；再弄清它凭什么成立，以及加上哪种约束它就会失效。</p>
+        <div class="hero-grid">
+          <div class="card">
+            <h3>学完本章，你能</h3>
+            <ol class="goals">
+              <li>说清新任务到达时最优派法怎么变：一条沿紧边的改派链，边际成本等于新任务的最终价格。</li>
+              <li>手写 O(n³) 的匈牙利算法（Dijkstra 版），解释标签、前驱和价格更新各自的含义。</li>
+              <li>证明指派约束矩阵全单模，并判断给它加一行之后整数性还在不在。</li>
+              <li>处理车多任务少、任务多车少、禁行和延后罚金；用“阈值加匹配”解瓶颈指派，读懂 Hall 证书。</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>本章信息</h3>
+            <dl class="meta">
+              <div><dt>用时</dt><dd>阅读与交互 80–110 分钟，Lab 2.5–3 小时</dd></div>
+              <div><dt>前置</dt><dd>第 1、2 章（指派模型、LP 松弛、价格、约化成本、紧边）。会读 numpy 代码。</dd></div>
+              <div><dt>对拍</dt><dd><span class="mono" id="envline"></span>；本章的算法由页面内置代码实现，不依赖求解器。</dd></div>
+              <div><dt>配套</dt><dd>Lab 代码包：5 个练习 + 1 个挑战，含一个手写算法，pytest 自动判分</dd></div>
+            </dl>
+          </div>
+        </div>
+        <div class="roadmap" aria-label="课程路线">
+          <div><b>PART 1</b>数学规划基础</div>
+          <div class="now"><b>PART 2</b>组合优化</div>
+          <div><b>PART 3</b>调度理论</div>
+          <div><b>PART 4</b>路径与波次</div>
+          <div><b>PART 5</b>大规模方法</div>
+          <div><b>PART 6</b>启发式</div>
+          <div><b>PART 7</b>多智能体时空规划</div>
+          <div><b>PART 8</b>动态与不确定</div>
+        </div>
+        <div class="roadmap-cap">第二部分 组合优化：<b>指派问题与匈牙利算法（本章）</b>→ 最短路与网络流 → 带容量的指派与背包 → 旅行商与车辆路径入门。</div>
+      </section>
+
+      <!-- ============================================================ 5.1 -->
+      <section class="chap" id="s1">
+        <h2 class="sec"><span class="no">5.1</span>任务陆续到达：一条改派链</h2>
+        <p class="lead">第 2 章把整张价格表一次涨完。真实的派车窗口里，任务是陆续到达的：已经按最优派好了前 <span class="m">k</span> 个任务，第 <span class="m">k</span> + 1 个到了，最优派法要怎么变？</p>
+        <p>本章沿用第 2 章的场景：6 辆车（V6 是备用车）、5 个任务，代价矩阵不变，最优总时间 124 s。任务按 T1 到 T5 的顺序到达。前四个到达时不需要想什么：每个任务拿走当时最便宜的空闲车。T1 拿 V3（6 s），T2 拿 V5（23 s），T3 拿 V2（32 s），T4 拿 V4（9 s）。这四次到达，最优派法都没有动过已经派好的任务。</p>
+        <p>T5 到达时情况变了。它离 V5 最近（10 s），可 V5 正在做 T2。此刻空闲的车只有 V1 和 V6，去 T5 分别要 82 s 和 74 s。</p>
+
+        <div class="predict" id="p1"></div>
+
+        <figure class="fig wide gatehost" id="fig1">
+          <div class="fig-body">
+            <div class="fig-toolbar">
+              <span class="label">到达顺序</span>
+              <div class="seg" id="ordSeg" role="group" aria-label="到达顺序"></div>
+              <span class="spacer"></span>
+              <button class="btn" id="btnReset" type="button">恢复默认场景</button>
+              <button class="btn" id="btnRandom" type="button">随机场景</button>
+            </div>
+            <div class="dispatch">
+              <div class="mapwrap">
+                <svg class="map" id="map" role="img" aria-label="两层仓库平面图：车辆、任务与当前派法"></svg>
+                <div class="legend">
+                  <span><i class="key-veh"></i>车（可拖动）</span>
+                  <span><i class="key-task"></i>任务（可拖动）</span>
+                  <span><i class="key-line"></i>沿用的派法</span>
+                  <span><i class="key-line hot"></i>这一步被改动的派法</span>
+                  <span><i class="key-line dash"></i>经提升机换层</span>
+                </div>
+                <div class="stepper" id="arrStepper">
+                  <button class="btn" id="arrPrev" type="button">◀ 上一个</button>
+                  <button class="btn primary" id="arrNext" type="button">下一个到达 ▶</button>
+                  <button class="btn ghost" id="arrAll" type="button">全部到达</button>
+                  <span class="txt" id="arrTxt"></span>
+                </div>
+              </div>
+              <div class="side">
+                <div class="statrow" id="arrStats"></div>
+                <div class="tbl-wrap"><table class="arrt" id="arrTable" aria-label="每次到达的边际成本"></table></div>
+                <div class="chainbox" id="chainBox"></div>
+                <div class="status" id="scnStatus"></div>
+              </div>
+            </div>
+          </div>
+          <figcaption><b>图 5-1</b>任务陆续到达。选一个到达顺序，一步步放任务进来。蓝线是沿用的派法，橙线是这一步被改动的，灰色虚线是被改动之前的。表里的“不改派”是每次都拿最便宜的空闲车。拖动车辆或任务可以换场景，也可以用 Tab 选中后按方向键移动。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>前四个任务，贪心和最优没有区别。</b>每次到达，最便宜的空闲车正好就是最优的选择，改派链只有一个环节：新任务拿走一辆空闲车。</p>
+        <p><b>第五个任务，最优要动两个已经派好的任务。</b>最优做法不是去找空闲的车，而是让 V5 转去做 T5，T2 改派给 V2（多 38 s），T3 再改派给 V1（多 6 s）。三个改动加起来的净增量是 54 s，比“不改派”的 74 s 少 20 s：被改派的 T2、T3 都变贵了（合计 +44 s），但 T5 从 74 s 降到 10 s，省下 64 s。</p>
+        <p><b>边际成本随顺序变，总和不变。</b>默认顺序下五次到达的边际成本是 6、23、32、9、54，合计 124。换一个顺序，各步的边际成本会不同，最后的总和仍然是 124：每一步之后的派法，都是“当时已到达任务”上的最优。</p>
+        <div class="callout key"><b class="t">贪心是长度为 1 的改派链</b>“拿最便宜的空闲车”只允许一种改动：新任务直接占一辆空闲车。匈牙利算法允许沿任意长的链改派，并且在所有链里挑最便宜的一条。下一节说这条链怎么找。</div>
+      </section>
+
+      <!-- ============================================================ 5.2 -->
+      <section class="chap" id="s2">
+        <h2 class="sec"><span class="no">5.2</span>一次插入的内部：约化成本上的最短路</h2>
+        <p class="lead">找最便宜的改派链，是一个最短路问题。边的长度是第 2 章的约化成本，路径从新任务出发，到任意一辆空闲车结束。</p>
+        <p>先把记号对齐。任务价格 <span class="m">u</span><sub class="m">j</sub>（可正可负），车价格 <span class="m">v</span><sub class="m">i</sub> ≥ 0，约化成本 <span class="m">r</span><sub class="m">ij</sub> = <span class="m">c</span><sub class="m">ij</sub> + <span class="m">v</span><sub class="m">i</sub> − <span class="m">u</span><sub class="m">j</sub> ≥ 0，<span class="m">r</span> = 0 的边是紧边。算法一直维持三件事：所有约化成本非负；已配对的边都是紧的；空闲的车价格为 0。第 2 章的证书检查器说的正是这三条，所以只要它们在，当前派法就是最优的。</p>
+        <p>新任务 <span class="m">j</span><sub>0</sub> 到达。要给它找车，可以直接选一辆车 <span class="m">i</span><sub>1</sub>。如果 <span class="m">i</span><sub>1</sub> 正被任务 <span class="m">j</span><sub>1</sub> 占着，<span class="m">j</span><sub>1</sub> 就得搬家，选一辆新车 <span class="m">i</span><sub>2</sub>，依此类推，直到碰到一辆空闲车。这是一条交替路：任务 → 车 → 车原来的任务 → 车……每一步“任务选车”的代价是这条边的约化成本，“车推出原来的任务”不花代价（那条边是紧的）。所以：</p>
+        <div class="formula one">
+          <span class="k">边际成本</span><span class="e"><i>u</i><sub>0</sub> + <i>D</i></span><span class="n"><i>u</i><sub>0</sub> = min<sub><i>i</i></sub>(<i>c</i><sub><i>i</i>,<i>j</i>₀</sub> + <i>v</i><sub><i>i</i></sub>)，直接选最便宜车的成本；<i>D</i> = 交替路上约化成本之和的最小值，是改派多付的部分</span>
+        </div>
+        <p>T5 的例子：<span class="m">u</span><sub>0</sub> = 10（V5 的 10 s，此时 V5 的车价是 0），<span class="m">D</span> = 44，边际成本 54。“不改派”的做法是在空闲的车里挑，相当于只允许长度 1 的路径，多付 64 s。</p>
+        <p>求最短路用 Dijkstra。标签 <span class="m">d</span><sub class="m">i</sub> 是“从新任务出发，到达车 <span class="m">i</span> 的最短距离”，等价于第 2 章里“要把新任务的价格再涨多少，车 <span class="m">i</span> 才会变成紧边”。完整的一次插入分六步：</p>
+        <ol class="steps">
+          <li><b>标价。</b><span class="m">u</span><sub class="m">j₀</sub> = min<sub class="m">i</sub>(<span class="m">c</span><sub class="m">i,j₀</sub> + <span class="m">v</span><sub class="m">i</sub>)。此后所有 <span class="m">r</span><sub class="m">i,j₀</sub> ≥ 0，至少一个为 0。</li>
+          <li><b>初始标签。</b><span class="m">d</span><sub class="m">i</sub> = <span class="m">r</span><sub class="m">i,j₀</sub>，前驱 <span class="m">pred</span><sub class="m">i</sub> = <span class="m">j</span><sub>0</sub>。</li>
+          <li><b>扫描。</b>在还没扫描的车里取 <span class="m">d</span> 最小的 <span class="m">i</span>*（并列取编号小的）。标记它已扫描。</li>
+          <li><b>停止或展开。</b>若 <span class="m">i</span>* 是空闲车，停止。否则设 <span class="m">j</span>′ 是它当前的任务：<span class="m">j</span>′ 也要搬家，对每辆未扫描的车 <span class="m">i</span>，若 <span class="m">d</span><sub class="m">i*</sub> + <span class="m">r</span><sub class="m">i,j′</sub> &lt; <span class="m">d</span><sub class="m">i</sub>，就更新 <span class="m">d</span><sub class="m">i</sub> 和 <span class="m">pred</span><sub class="m">i</sub> = <span class="m">j</span>′，然后回到第 3 步。</li>
+          <li><b>涨价。</b>记 <span class="m">D</span> = <span class="m">d</span><sub class="m">i*</sub>。每辆已扫描的车（终点除外）<span class="m">v</span><sub class="m">i</sub> += <span class="m">D</span> − <span class="m">d</span><sub class="m">i</sub>，它当前的任务 <span class="m">u</span> 涨同样多；新任务 <span class="m">u</span><sub class="m">j₀</sub> += <span class="m">D</span>。</li>
+          <li><b>翻转。</b>从 <span class="m">i</span>* 沿 <span class="m">pred</span> 回溯，任务逐个改派，得到改派链。</li>
+        </ol>
+
+        <figure class="fig wide" id="fig2">
+          <div class="fig-body">
+            <div class="fig-toolbar">
+              <span class="label">回放第几次到达（任务按 T1 到 T5 顺序到达）</span>
+              <div class="seg" id="insSeg" role="group" aria-label="选择到达的任务"></div>
+              <span class="spacer"></span>
+              <button class="btn" id="insAuto" type="button">▶ 自动播放</button>
+              <button class="btn" id="insReset" type="button">重来</button>
+            </div>
+            <div class="inswrap">
+              <div><svg class="bip ins" id="insGraph" role="img" aria-label="增量匈牙利：任务、车、匹配与扫描过的车"></svg></div>
+              <div>
+                <div class="tbl-wrap"><table class="vtab" id="insTable" aria-label="每辆车的标签与状态"></table></div>
+                <div class="mtx-note">标签 <span class="m">d</span>：新任务要涨多少价，才能让这辆车变成紧边。“前驱”是最短路上把这辆车“够到”的任务。</div>
+              </div>
+            </div>
+            <div class="hg-ctl" id="insCtl"></div>
+            <div class="hg-say" id="insSay" aria-live="polite"></div>
+          </div>
+          <figcaption><b>图 5-2</b>一次插入的回放（默认数据的最终价格与 HiGHS 报告的顶点一致）。选 T5 看最长的一次：扫描 V5、V4、V2、V3，最后在 V1 停下，路径长度 <span class="m">D</span> = 44。橙色边是最终的改派链，蓝色粗边是配对，虚线是已被扫描的“树”。</figcaption>
+        </figure>
+
+        <h3 class="sub">为什么这一步之后，价格仍然是公道的</h3>
+        <p>涨价的规则看起来只是一组加减，要确认它没有把任何约化成本推成负数。三类边分开看：</p>
+        <ul>
+          <li><b>配对的边（车和它的任务）。</b>车 <span class="m">v</span> 涨了 <span class="m">D</span> − <span class="m">d</span>，任务 <span class="m">u</span> 涨同样多，<span class="m">r</span> = <span class="m">c</span> + <span class="m">v</span> − <span class="m">u</span> 不变，仍是 0。</li>
+          <li><b>路径上的新边。</b>Dijkstra 保证沿最短路每条边的“<span class="m">d</span> 差”恰好等于它的约化成本，涨价之后这条边的约化成本变成 0。改派翻转以后，它们成为新的配对，正好是紧的。</li>
+          <li><b>其他边（一端在树里，另一端不在）。</b>树里的任务涨了 <span class="m">D</span> − <span class="m">d</span>（它的车被扫描时的标签），松弛保证 <span class="m">d</span><sub class="m">i</sub> ≤ <span class="m">d</span> + <span class="m">r</span>（<span class="m">i</span> 是未扫描的车，<span class="m">r</span> 是这条边原来的约化成本），而 Dijkstra 又保证未扫描的车 <span class="m">d</span><sub class="m">i</sub> ≥ <span class="m">D</span>，所以 <span class="m">r</span> ≥ <span class="m">D</span> − <span class="m">d</span>：这条边只减少 <span class="m">D</span> − <span class="m">d</span>，不会变负。</li>
+        </ul>
+        <p>终点车的增量是 <span class="m">D</span> − <span class="m">D</span> = 0，所以空闲的车价格仍是 0。三条不变量都保持住，第 2 章的互补松弛成立，当前派法对已到达的任务是最优的。同时可以看出：<b>新任务的最终价格 <span class="m">u</span><sub class="m">j₀</sub> 就是这次到达的边际成本</b>。其他配对的任务和车成对涨价，一个加一个减，对 ∑<span class="m">u</span> − ∑<span class="m">v</span> 没有贡献，多出来的只有 <span class="m">u</span><sub class="m">j₀</sub> = <span class="m">u</span><sub>0</sub> + <span class="m">D</span>。</p>
+        <div class="callout"><b class="t">和第 2 章的图 2-6 是同一件事</b>那里每一次“给被争抢的车涨价 δ”，在这里是 Dijkstra 的一次扫描：δ 的累计就是标签 <span class="m">d</span>。第 2 章的涨价拍卖把许多次小涨价一步步做完；这里把它们合并成一次最短路，涨价一次到位。两者停在同一张价格表上，最终价格与 HiGHS 报告的一致。</div>
+      </section>
+
+      <!-- ============================================================ 5.3 -->
+      <section class="chap" id="s3">
+        <h2 class="sec"><span class="no">5.3</span>写成代码：O(n³) 是怎么来的</h2>
+        <p class="lead">上面六步写成 Python，大约三十行。Lab 练习 2 就是让你写这一段，并让它通过第 2 章的证书检查。</p>
+        <div class="wide"><pre class="code" data-lang="py"><span class="ln" data-n="1"><span class="k">def</span> insert(self, j0):                                  <span class="c"># 新任务 j0 到达</span></span><span class="ln" data-n="2">    C, u, v, m = self.C, self.u, self.v, self.m</span><span class="ln" data-n="3">    u[j0] = min(C[i][j0] + v[i] <span class="k">for</span> i <span class="k">in</span> range(m))     <span class="c"># 1 标价：最便宜的 成本 + 车价</span></span><span class="ln" data-n="4">    d = [C[i][j0] + v[i] - u[j0] <span class="k">for</span> i <span class="k">in</span> range(m)]  <span class="c"># 2 标签 = 约化成本</span></span><span class="ln" data-n="5">    pred = [j0] * m                                     <span class="c">#   前驱：谁“够到”了这辆车</span></span><span class="ln" data-n="6">    scanned, order = [<span class="k">False</span>] * m, []</span><span class="ln" data-n="7">    <span class="k">while</span> <span class="k">True</span>:                                         <span class="c"># 3 Dijkstra：数组版，O(m) 取最小</span></span><span class="ln" data-n="8">        i_star = min((i <span class="k">for</span> i <span class="k">in</span> range(m) <span class="k">if not</span> scanned[i]), key=<span class="k">lambda</span> i: (d[i], i))</span><span class="ln" data-n="9">        scanned[i_star] = <span class="k">True</span></span><span class="ln" data-n="10">        order.append((i_star, d[i_star]))</span><span class="ln" data-n="11">        jp = self.task_of[i_star]</span><span class="ln" data-n="12">        <span class="k">if</span> jp <span class="k">is None</span>:                                  <span class="c"># 4 碰到空闲车：停</span></span><span class="ln" data-n="13">            <span class="k">break</span></span><span class="ln" data-n="14">        <span class="k">for</span> i <span class="k">in</span> range(m):                             <span class="c">#   否则 jp 也搬家：松弛，O(m)</span></span><span class="ln" data-n="15">            <span class="k">if not</span> scanned[i]:</span><span class="ln" data-n="16">                cand = d[i_star] + C[i][jp] + v[i] - u[jp]</span><span class="ln" data-n="17">                <span class="k">if</span> cand &lt; d[i]:</span><span class="ln" data-n="18">                    d[i], pred[i] = cand, jp</span><span class="ln" data-n="19">    D = d[i_star]</span><span class="ln" data-n="20">    <span class="k">for</span> i, di <span class="k">in</span> order[:-1]:                         <span class="c"># 5 涨价：扫描过的车和它们的任务一起涨</span></span><span class="ln" data-n="21">        v[i] += D - di</span><span class="ln" data-n="22">        u[self.task_of[i]] += D - di</span><span class="ln" data-n="23">    u[j0] += D</span><span class="ln" data-n="24">    i = i_star                                          <span class="c"># 6 沿前驱翻转：改派链</span></span><span class="ln" data-n="25">    <span class="k">while</span> <span class="k">True</span>:</span><span class="ln" data-n="26">        j = pred[i]</span><span class="ln" data-n="27">        prev = self.vehicle_of[j]</span><span class="ln" data-n="28">        self.vehicle_of[j], self.task_of[i] = i, j</span><span class="ln" data-n="29">        <span class="k">if</span> j == j0:</span><span class="ln" data-n="30">            <span class="k">break</span></span><span class="ln" data-n="31">        i = prev</span></pre></div>
+        <h3 class="sub">复杂度</h3>
+        <p>每辆车在一次插入里最多被扫描一次，所以第 3 步最多执行 <span class="m">m</span> 次；每次扫描做一遍第 4 步的松弛，是 <span class="m">m</span> 次比较。一次插入 O(<span class="m">m</span><sup>2</sup>)，<span class="m">n</span> 个任务共 O(<span class="m">n m</span><sup>2</sup>)，方阵就是 O(<span class="m">n</span><sup>3</sup>)。这里用数组而不是堆存标签：图是稠密的，每次扫描本来就要看全部 <span class="m">m</span> 个标签，堆省不下什么。</p>
+        <p>O(<span class="m">n</span><sup>3</sup>) 是最坏情况，平时远没有这么糟。下面的实验数的是“扫描了多少辆车”和“松弛了多少次”，它们不依赖机器，每次跑都一样。</p>
+
+        <figure class="fig wide" id="fig3">
+          <div class="fig-body">
+            <div class="fig-toolbar">
+              <span class="label">观察</span>
+              <div class="seg" id="cxMetric" role="group" aria-label="指标"></div>
+              <span class="spacer"></span>
+              <button class="btn" id="cxRerun" type="button">换一个随机种子重跑</button>
+            </div>
+            <div class="cxwrap">
+              <div><svg class="chart cxchart" id="cxChart" role="img" aria-label="扫描与松弛次数随规模增长"></svg></div>
+              <div class="cxnote" id="cxNote"></div>
+            </div>
+          </div>
+          <figcaption><b>图 5-3</b>随机矩阵（代价 1 到 10⁶ 的整数，几乎没有并列）与乘积矩阵 <span class="m">c</span><sub class="m">ij</sub> = <span class="m">i</span>·<span class="m">j</span> 上，n × n 指派的总扫描次数和松弛次数（双对数坐标）。灰色虚线是 <span class="m">n</span><sup>2</sup> 与 <span class="m">n</span><sup>3</sup> 的参照斜率。乘积矩阵让每次插入都要扫描几乎全部的车，是这个算法的“最坏情形”。</figcaption>
+        </figure>
+
+        <p><b>随机矩阵上，每次插入只扫描一小部分车。</b>价格把车分开了，新任务很快就碰到一辆空闲车，<span class="m">n</span> = 320 时平均每次十几辆，总松弛次数增长得比 <span class="m">n</span><sup>3</sup> 慢。<b>乘积矩阵上，第 <span class="m">k</span> 次插入扫描 <span class="m">k</span> 辆车，总数 <span class="m">n</span>(<span class="m">n</span>+1)/2，每次扫描又要松弛 <span class="m">n</span> 次，三次方增长一目了然。</b>Lab 练习 2 的测试里就有这一条。</p>
+
+        <h3 class="sub">和求解器比一比</h3>
+        <p>SciPy 的 <code>linear_sum_assignment</code> 用的也是最短增广路，实现见 Crouse（2016），再加上 C++ 的优化。下面是在生成本页数据的环境里的实测，规模是 <span class="m">n</span> × <span class="m">n</span>、代价 1 到 10⁶ 的随机整数矩阵：</p>
+        <div class="tbl-wrap">
+          <table class="gloss timetab" id="timeTable"></table>
+        </div>
+        <p style="margin-top:14px">手写 Python 版比 SciPy 慢两个数量级左右，差距来自解释器，不是算法。真正的差距在右边两列：把同一个指派问题当成 LP 或 MIP 交给 HiGHS，比 SciPy 慢两到四个数量级，规模越大差得越多。第 2 章的结论在这里再确认一遍：<b>识别出这是指派问题，比会调求解器重要得多。</b></p>
+        <div class="callout"><b class="t">窗口重算，还是增量维护？</b>每个窗口有几百个任务的时候，从头解一次就是几毫秒，比维护增量状态更不容易出错，也更容易测试。增量的价值有两处：任务流非常密、单次响应必须在几十微秒内；以及改派链本身就是要给调度员看的解释，“T5 来了，V5 转去做它，T2 改给 V2，T3 改给 V1”。已经出发的车、已经开始的任务要先从问题里拿掉，只对还没执行的部分重算。</div>
+      </section>

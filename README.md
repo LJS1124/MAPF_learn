@@ -47,3 +47,7 @@ tests/         # unittest 测试，保证教程里的结论可复现
 - 智能体到达终点后**停留在终点**（“stay at target”模型），因此仍可能挡住别人。
 - 冲突 = 顶点冲突（同时刻同格）+ 边冲突（对穿交换位置）。
 - 目标函数默认 SOC（Sum of Costs）。
+
+## 另一条线：物流调度与运筹优化课程
+
+[`course/`](course/) 是一门 33 章的系统课程（数学规划、组合优化、调度、路径与波次、大规模方法、启发式、多智能体时空规划、动态与不确定），每章有交互页、Lab 代码包与对拍测试。大纲见 [course/outline.md](course/outline.md)。第 5 章（指派问题与匈牙利算法）的源码已在 [course/ch05-assignment/](course/ch05-assignment/)。第 7 部分的 MAPF 理论原型会建立在上面这份 MAPF 教程之上。

@@ -1,2 +1,8 @@
 __pycache__/
 *.pyc
+.pytest_cache/
+# 课程页面的本地构建产物（发布用的 ch05-assignment.html 要提交）
+course/**/page/dist/preview.html
+course/**/page/dist/app.js
+course/**/page/dist/shots/
+course/**/dist/*.zip

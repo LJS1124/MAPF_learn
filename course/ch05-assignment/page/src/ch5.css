@@ -1,0 +1,203 @@
+
+/* ================================================================ 第 5 章新增组件 */
+.steps { counter-reset: st; list-style: none; padding: 0; margin: 0 0 1em; display: grid; gap: 8px; max-width: var(--prose); }
+.steps li { counter-increment: st; position: relative; padding-left: 2.3em; margin: 0; }
+.steps li::before { content: counter(st); position: absolute; left: 0; top: 0.2em; width: 1.55em; height: 1.55em; border-radius: 50%; background: var(--accent-wash-2); color: var(--accent-strong); font-family: var(--mono); font-size: 12.5px; font-weight: 600; display: grid; place-items: center; line-height: 1; }
+.formula.one { grid-template-columns: auto auto minmax(0, 1fr); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button { border: 1px solid var(--line-2); background: var(--surface); border-radius: 999px; padding: 3px 12px; font-family: var(--mono); font-size: 12.5px; cursor: pointer; color: var(--ink-2); line-height: 1.6; }
+.chips button:hover { border-color: var(--accent); }
+.chips button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.two-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; }
+.map .task.pending circle { stroke-dasharray: 3 3; opacity: 0.45; }
+.map .task.pending text { opacity: 0.55; }
+.map .task.fresh circle { stroke: var(--hot); stroke-width: 2.6; fill: var(--hot-wash); }
+
+/* ---------------------------------------------------------------- 图 5-1 到达 */
+table.arrt { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.arrt th { text-align: right; font-weight: 500; color: var(--muted); font-size: 11.5px; padding: 5px 6px; border-bottom: 1px solid var(--line-2); white-space: nowrap; }
+table.arrt th:first-child, table.arrt td:first-child { text-align: left; }
+table.arrt td { padding: 5px 6px; border-bottom: 1px solid var(--line); text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.arrt tbody tr { cursor: pointer; }
+table.arrt tr.cur td { background: var(--accent-wash); }
+table.arrt tr.future td { color: var(--muted); }
+table.arrt tr.tot td { font-weight: 600; border-bottom: 0; cursor: default; }
+table.arrt td.gap { color: var(--hot-strong); font-weight: 600; }
+table.arrt .len { display: inline-flex; gap: 2px; vertical-align: middle; margin-left: 4px; }
+table.arrt .len i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: block; }
+table.arrt .len i.h { background: var(--hot); }
+.chainbox { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; background: var(--surface-2); font-size: 13.5px; line-height: 1.7; color: var(--ink-2); min-height: 6.5em; }
+.chainbox .ch-h { font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+.chainbox ol { margin: 2px 0 6px; padding-left: 1.3em; }
+.chainbox li { margin: 0.1em 0; }
+.chainbox .plus { color: var(--hot-strong); font-family: var(--mono); font-weight: 600; }
+.chainbox .mn { font-family: var(--mono); }
+.chainbox p { margin: 0 0 4px; }
+
+/* ---------------------------------------------------------------- 图 5-2 插入回放 */
+.inswrap { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 22px; align-items: center; }
+@media (max-width: 900px) { .inswrap { grid-template-columns: minmax(0, 1fr); } }
+.inswrap > div { min-width: 0; }
+svg.bip.ins { max-height: 25rem; }
+.bip .e.tree { stroke: var(--hot); stroke-width: 1.8; stroke-dasharray: 5 4; opacity: 1; }
+.bip .e.chain { stroke: var(--hot); stroke-width: 4.5; opacity: 1; }
+.bip .e.old { stroke: var(--muted); stroke-width: 2; stroke-dasharray: 2 4; opacity: 0.9; }
+.bip .bnode.scanned rect { stroke: var(--hot); fill: var(--hot-wash); stroke-width: 2.2; }
+.bip .bnode.cur rect { stroke: var(--accent-strong); stroke-width: 3.2; }
+.bip .bnode.newt rect { stroke: var(--hot); stroke-width: 2.6; stroke-dasharray: 5 3; }
+.bip .dlab { font-family: var(--mono); font-size: 11px; fill: var(--hot-strong); font-weight: 600; }
+.bip .dlab.inf { fill: var(--muted); font-weight: 400; }
+table.vtab { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.vtab th { text-align: right; font-weight: 500; color: var(--muted); font-size: 11.5px; padding: 5px 6px; border-bottom: 1px solid var(--line-2); white-space: nowrap; }
+table.vtab th:first-child, table.vtab th:nth-child(2), table.vtab th:last-child { text-align: left; }
+table.vtab td { padding: 5px 6px; border-bottom: 1px solid var(--line); text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.vtab td:first-child, table.vtab td:nth-child(2), table.vtab td:last-child { text-align: left; }
+table.vtab tr.scanned td { background: var(--hot-wash); }
+table.vtab tr.cur td { background: var(--accent-wash-2); }
+table.vtab td.chg { color: var(--hot-strong); font-weight: 600; }
+table.vtab td.st { font-family: var(--sans); font-size: 12px; color: var(--ink-2); }
+.hg-say b.key { color: var(--hot-strong); }
+.hg-say .mn { font-family: var(--mono); }
+.hg-say .fin { display: block; margin-top: 8px; padding: 8px 12px; border-radius: 8px; background: var(--good-wash); border: 1px solid color-mix(in srgb, var(--good) 40%, var(--line)); color: var(--ink); }
+
+/* ---------------------------------------------------------------- 图 5-3 复杂度 */
+.cxwrap { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 22px; align-items: center; }
+@media (max-width: 900px) { .cxwrap { grid-template-columns: minmax(0, 1fr); } }
+.cxwrap > div { min-width: 0; }
+svg.cxchart { max-height: 23rem; }
+.cxnote { font-size: 13.5px; color: var(--ink-2); line-height: 1.75; }
+.cxnote p { margin: 0 0 8px; }
+.cxnote b.r { color: var(--accent-strong); }
+.cxnote b.p { color: var(--hot-strong); }
+.cxchart .ser-r { stroke: var(--accent); stroke-width: 2.4; fill: none; stroke-linejoin: round; }
+.cxchart .ser-p { stroke: var(--hot); stroke-width: 2.4; fill: none; stroke-linejoin: round; }
+.cxchart .ref { stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 5 4; fill: none; }
+.cxchart .dot-r { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+.cxchart .dot-p { fill: var(--hot); stroke: var(--surface); stroke-width: 2; }
+.cxchart .lab-r { fill: var(--accent-strong); font-size: 11.5px; }
+.cxchart .lab-p { fill: var(--hot-strong); font-size: 11.5px; }
+.cxchart .lab-ref { fill: var(--muted); font-size: 11px; }
+table.timetab td, table.timetab th { text-align: right; white-space: nowrap; }
+table.timetab td:first-child, table.timetab th:first-child { text-align: left; font-family: var(--mono); }
+table.timetab td { font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+table.timetab td:nth-child(2) { color: var(--ink-2); }
+
+/* ---------------------------------------------------------------- 图 5-4 全单模检查器 */
+.tuwrap { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 900px) { .tuwrap { grid-template-columns: minmax(0, 1fr); } }
+.tuwrap > div { min-width: 0; }
+table.tut { border-collapse: separate; border-spacing: 2px; font-family: var(--mono); font-size: 12px; }
+table.tut th { font-weight: 500; color: var(--muted); font-size: 10.5px; padding: 2px 0; text-align: center; line-height: 1.25; }
+table.tut th.rl { text-align: right; padding-right: 8px; color: var(--ink-2); font-size: 11.5px; white-space: nowrap; }
+table.tut th.hi { color: var(--hot-strong); background: var(--hot-wash); border-radius: 4px; }
+table.tut td { width: 2.4em; height: 1.95em; text-align: center; border-radius: 4px; background: var(--surface-2); color: var(--muted); padding: 0; }
+table.tut td.one { background: var(--accent-wash-2); color: var(--accent-strong); font-weight: 600; }
+table.tut td.vr { box-shadow: inset 0 0 0 2px var(--hot); background: var(--hot-wash); color: var(--hot-strong); }
+table.tut tr.extra th.rl { color: var(--hot-strong); }
+table.tut tr.extra td.one { background: var(--hot-wash); color: var(--hot-strong); }
+table.tut tr.sep td, table.tut tr.sep th { border-top: 6px solid transparent; }
+.tuhead { font-size: 14px; color: var(--ink-2); margin-bottom: 8px; line-height: 1.7; }
+.tuhead b { font-family: var(--mono); color: var(--ink); }
+svg.tuhist { max-height: 15rem; }
+.tuhist .bar { fill: var(--accent); }
+.tuhist .bar.bad { fill: var(--hot); }
+.tuhist .bl { font-family: var(--mono); font-size: 11.5px; fill: var(--ink-2); }
+.tuhist .bv { font-family: var(--mono); font-size: 11.5px; fill: var(--ink); }
+.tumsg { font-size: 14px; line-height: 1.75; color: var(--ink-2); margin-top: 10px; }
+.tumsg p { margin: 0 0 8px; }
+.tumsg .ok { display: block; padding: 8px 12px; border-radius: 8px; background: var(--good-wash); border: 1px solid color-mix(in srgb, var(--good) 40%, var(--line)); color: var(--ink); }
+.tumsg .bad { display: block; padding: 8px 12px; border-radius: 8px; background: var(--hot-wash); border: 1px solid color-mix(in srgb, var(--hot) 45%, var(--line)); color: var(--ink); }
+table.subm { border-collapse: separate; border-spacing: 3px; font-family: var(--mono); font-size: 13px; margin: 6px 0; }
+table.subm td { width: 2.2em; height: 1.9em; text-align: center; border-radius: 4px; background: var(--surface-2); }
+table.subm td.h { background: none; color: var(--muted); font-size: 11px; }
+table.subm th { font-weight: 500; font-size: 11px; color: var(--muted); padding: 0 6px; white-space: nowrap; text-align: right; }
+
+/* ---------------------------------------------------------------- 图 5-5 加一行 */
+.lpwrap { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 900px) { .lpwrap { grid-template-columns: minmax(0, 1fr); } }
+.lpwrap > div { min-width: 0; }
+table.cft td, table.wkt td, table.fbt td, table.bnt td { width: 3.6em; height: 2.7em; cursor: default; line-height: 1.15; }
+table.cft td { height: 3.2em; }
+table.cft td { cursor: pointer; }
+table.cft td small, table.wkt td small, table.bnt td small { display: block; font-size: 10px; font-weight: 600; color: var(--hot-strong); }
+table.cft td.on small { color: #fff; }
+table.cft td.on.frac small { color: var(--hot-strong); }
+table.cft td.pickE { box-shadow: inset 0 0 0 2.5px var(--hot); }
+table.cft td.frac { box-shadow: inset 0 0 0 2px var(--hot); background: var(--hot-wash); color: var(--ink); }
+table.cft td.frac.pickE { box-shadow: inset 0 0 0 2.5px var(--hot); }
+table.cft td.lp1 { outline: 2px solid var(--accent-strong); outline-offset: -2px; }
+.cfsay { font-size: 14px; line-height: 1.8; color: var(--ink-2); background: var(--surface-2); border-radius: 8px; padding: 12px 14px; }
+.cfsay p { margin: 0 0 8px; }
+.cfsay p:last-child { margin-bottom: 0; }
+.cfsay .mn { font-family: var(--mono); }
+.cfsay .part { display: block; margin: 4px 0; padding: 6px 10px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); font-size: 13px; }
+.cfsay .part b { font-family: var(--mono); color: var(--accent-strong); }
+.cflag { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 22px; align-items: center; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+@media (max-width: 900px) { .cflag { grid-template-columns: minmax(0, 1fr); } }
+.cflag > div { min-width: 0; }
+.cflagnote { font-size: 13.5px; color: var(--ink-2); line-height: 1.75; margin-top: 8px; }
+svg.lgchart { max-height: 17rem; }
+.lgchart .ref-lp { stroke: var(--accent); stroke-width: 1.4; stroke-dasharray: 5 4; }
+.lgchart .ref-ip { stroke: var(--hot); stroke-width: 1.4; stroke-dasharray: 5 4; }
+.lgchart .cur { stroke: var(--ink); stroke-width: 1.4; }
+.lgchart .lab-lp { fill: var(--accent-strong); font-size: 11px; }
+.lgchart .lab-ip { fill: var(--hot-strong); font-size: 11px; }
+svg.tri { width: 100%; height: auto; display: block; max-height: 19rem; }
+.tri .tedge { stroke: var(--line-2); stroke-width: 2; fill: none; stroke-linecap: round; }
+.tri .tedge.on { stroke: var(--accent); }
+.tri .tedge.half { stroke: var(--hot); stroke-dasharray: 6 4; }
+.tri .tnode circle { fill: var(--surface); stroke: var(--ink); stroke-width: 2; }
+.tri .tnode text { font-family: var(--mono); font-weight: 600; font-size: 15px; fill: var(--ink); }
+.tri .tlab { font-family: var(--mono); font-size: 12px; fill: var(--ink-2); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; }
+.tri .tlab.hot { fill: var(--hot-strong); font-weight: 600; }
+
+/* ---------------------------------------------------------------- 图 5-6 变形 */
+table.wkt td.dummy { background: var(--surface-3); color: var(--ink-2); }
+table.wkt td.off, table.wkt th.off { opacity: 0.35; }
+table.wkt th.dl { color: var(--muted); font-style: italic; }
+.wkchartrow { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 22px; align-items: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+@media (max-width: 900px) { .wkchartrow { grid-template-columns: minmax(0, 1fr); } }
+.wkchartrow > div { min-width: 0; }
+svg.wkchart { max-height: 14rem; }
+.wkchart .step { stroke: var(--accent); stroke-width: 2.4; fill: none; stroke-linejoin: round; }
+.wkchart .cur { stroke: var(--hot); stroke-width: 1.5; }
+.wkchart .dotc { fill: var(--hot); stroke: var(--surface); stroke-width: 2; }
+table.fbt td { cursor: pointer; }
+table.fbt td.forb { background-image: repeating-linear-gradient(135deg, transparent 0 4px, var(--line-2) 4px 6px); color: var(--muted); }
+table.fbt td.used { box-shadow: inset 0 0 0 2.5px var(--bad); }
+table.fbt td.hallc { box-shadow: inset 0 0 0 2px var(--hot); }
+table.fbt th.hi { color: var(--hot-strong); background: var(--hot-wash); border-radius: 5px; }
+.fbcol { display: grid; gap: 12px; }
+.fbbox { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; font-size: 13.5px; line-height: 1.75; background: var(--surface); color: var(--ink-2); }
+.fbbox.good { border-color: color-mix(in srgb, var(--good) 45%, var(--line)); background: var(--good-wash); }
+.fbbox.naive { border-color: color-mix(in srgb, var(--bad) 40%, var(--line)); }
+.fbbox h5 { margin: 0 0 6px; font-size: 12.5px; letter-spacing: 0.05em; color: var(--muted); font-weight: 600; }
+.fbbox pre { font-family: var(--mono); font-size: 12px; line-height: 1.6; background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; overflow-x: auto; margin: 6px 0; color: var(--ink); }
+.fbbox p { margin: 0 0 6px; }
+.fbbox .warn { color: var(--bad); font-weight: 600; }
+.fbbox .okk { color: var(--good); font-weight: 600; }
+
+/* ---------------------------------------------------------------- 图 5-7 瓶颈 */
+.bnwrap { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 22px; align-items: start; margin-top: 8px; }
+@media (max-width: 900px) { .bnwrap { grid-template-columns: minmax(0, 1fr); } }
+.bnwrap > div { min-width: 0; }
+table.bnt td.no { color: var(--muted); opacity: 0.5; background: var(--surface-3); }
+table.bnt td.hallc { box-shadow: inset 0 0 0 2px var(--hot); background: var(--hot-wash); opacity: 1; color: var(--hot-strong); }
+table.bnt th.hi { color: var(--hot-strong); background: var(--hot-wash); border-radius: 5px; }
+table.bnt td.on { background: var(--accent); color: #fff; opacity: 1; }
+table.bnt td.mx { box-shadow: inset 0 0 0 2.5px var(--hot); }
+.bnsay { font-size: 14px; line-height: 1.8; color: var(--ink-2); background: var(--surface-2); border-radius: 8px; padding: 12px 14px; min-height: 8em; }
+.bnsay p { margin: 0 0 8px; }
+.bnsay p:last-child { margin-bottom: 0; }
+.bnsay b.bad { color: var(--bad); }
+.bnsay b.good { color: var(--good); }
+.bnchartrow { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 22px; align-items: center; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+@media (max-width: 900px) { .bnchartrow { grid-template-columns: minmax(0, 1fr); } }
+.bnchartrow > div { min-width: 0; }
+svg.bnchart { max-height: 19rem; }
+.bnchart .stepline { stroke: var(--accent); stroke-width: 2.4; fill: none; stroke-linejoin: round; }
+.bnchart .nofeas { fill: var(--bad-wash); }
+.bnchart .dotf { fill: var(--hot); stroke: var(--surface); stroke-width: 2; }
+.bnchart .curv { stroke: var(--ink); stroke-width: 1.4; }
+.bnchart .lab-f { fill: var(--hot-strong); font-size: 11.5px; }
+.bnchart .lab-n { fill: var(--bad); font-size: 11.5px; }
