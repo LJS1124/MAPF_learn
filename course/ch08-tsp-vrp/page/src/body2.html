@@ -1,0 +1,100 @@
+
+      <!-- ============================================================ 8.3 -->
+      <section class="chap" id="s3">
+        <h2 class="sec"><span class="no">8.3</span>MTZ 与模型的强弱</h2>
+        <p class="lead">另一条路是把指数多的约束压成多项式个，代价是加辅助变量。最常用的是 Miller–Tucker–Zemlin（MTZ，1960）：给每个客户一个数 <span class="m">u</span><sub class="m">i</sub>，表示它是路线上的第几站。</p>
+        <div class="formula one">
+          <span class="k">MTZ</span><span class="e"><i>u</i><sub>i</sub> − <i>u</i><sub>j</sub> + <i>m</i> <i>x</i><sub>ij</sub> ≤ <i>m</i> − 1,　1 ≤ <i>u</i><sub>i</sub> ≤ <i>m</i></span><span class="n"><i>m</i> 是客户数；i、j 是客户，i ≠ j</span>
+        </div>
+        <p>读法：如果 <span class="m">x</span><sub class="m">ij</sub> = 1（车从 <span class="m">i</span> 直接开到 <span class="m">j</span>），约束变成 <span class="m">u</span><sub class="m">j</sub> ≥ <span class="m">u</span><sub class="m">i</sub> + 1：沿着路线，站序号严格递增。如果一个不含仓库的小圈存在，沿圈走一周，站序号要一路递增又回到起点，不可能，所以小圈被排除。如果 <span class="m">x</span><sub class="m">ij</sub> = 0，约束变成 <span class="m">u</span><sub class="m">i</sub> − <span class="m">u</span><sub class="m">j</sub> ≤ <span class="m">m</span> − 1，永远成立，不起作用。</p>
+        <p>约束只有约 <span class="m">m</span><sup>2</sup> 条，可以直接交给求解器。但这是第 3 章的 Big-M：系数 <span class="m">m</span> 是“为了让约束在 <span class="m">x</span> = 0 时失效”取的大数，LP 松弛里 <span class="m">x</span><sub class="m">ij</sub> 可以取很小的分数，约束几乎不起作用，下界很弱。</p>
+
+        <div class="predict" id="p2"></div>
+
+        <figure class="fig wide gatehost" id="fig3">
+          <div class="fig-body">
+            <div class="fig-toolbar">
+              <span class="label">客户数 <span class="m">m</span> = <b id="bndMv" style="font-family:var(--mono);color:var(--hot-strong)"></b></span>
+              <input type="range" id="bndM" min="4" max="8" step="1" value="8" aria-label="客户数" style="width:14rem">
+            </div>
+            <div class="twocol">
+              <div><svg class="chart" id="bndChart" role="img" aria-label="三种模型的下界与最优"></svg></div>
+              <div>
+                <div class="tbl-wrap"><table class="lbt" id="bndTable" aria-label="三种模型的规模与下界"></table></div>
+                <div class="saybox" id="bndSay"></div>
+              </div>
+            </div>
+          </div>
+          <figcaption><b>图 8-3</b>三种模型的下界（同一组点，取前 <span class="m">m</span> 个客户）。指派松弛只有出入度约束；MTZ 是紧凑模型的 LP 松弛；“子回路约束”是割平面循环停下时的 LP 值。最右边是最优。全部由页面内置的单纯形法、割平面循环和动态规划算出。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>8 个客户：</b>指派松弛 198，MTZ 的 LP 203.25，子回路约束的 LP 255，最优 255。MTZ 比指派松弛只高了 5，几乎没有帮助；割平面循环把下界一直推到最优。把客户数拖到 4：168、170、211、211，同样的格局。</p>
+        <p><b>两种模型的取舍。</b>MTZ 好写、规模小，适合客户少、要快速建模的场合；割平面模型的 LP 强得多，是求解器解大规模旅行商的做法，但要有惰性约束和分离程序。带时间窗、多车、载重的变种里，MTZ 的辅助变量还可以直接表达“到达时间”，这是它常被保留的原因（第 15 章）。可以对 MTZ 做提升（Desrochers–Laporte）收紧下界，仍然不及子回路约束。</p>
+        <div class="callout key"><b class="t">选模型看的是 LP 下界，不是约束条数</b>约束少不等于好解。第 3 章讲的紧化在这里又出现了一次：同一个整数集合，可以有强弱不同的 LP 松弛。指派 ≤ MTZ ≤ 子回路约束 ≤ 最优，这个顺序对任何实例都成立，Lab 里在随机实例上验证。</div>
+      </section>
+
+      <!-- ============================================================ 8.4 -->
+      <section class="chap" id="s4">
+        <h2 class="sec"><span class="no">8.4</span>车辆路径的骨架</h2>
+        <p class="lead">现实里很少只有一辆车。把 8 个货位的托盘（每个货位的托盘数不同）分给几辆载重为 9 的车，每辆车从仓库出发、送完再回来，总行驶距离最小。这是<b>带载重的车辆路径问题</b>（CVRP）。</p>
+        <p>它是这门课前面几章的拼装：</p>
+        <div class="theorems">
+          <div class="thm"><div class="tn">指派（第 5 章）</div><p>每个客户恰有一辆车到达、一辆车离开：出入度约束，和 TSP 一样。仓库的出度是车数 <span class="m">K</span>。</p></div>
+          <div class="thm"><div class="tn">装载与载重（第 7 章）</div><p>每条路线的托盘数不超过 <span class="m">Q</span>。写成割：对客户集合 <span class="m">S</span>，进入 <span class="m">S</span> 的弧数至少是 ⌈<span class="m">d</span>(<span class="m">S</span>) / <span class="m">Q</span>⌉，<span class="m">d</span>(<span class="m">S</span>) 是 <span class="m">S</span> 的托盘总数。这个上取整就是装箱的下界。</p></div>
+          <div class="thm"><div class="tn">子回路（本章）</div><p>⌈<span class="m">d</span>(<span class="m">S</span>) / <span class="m">Q</span>⌉ ≥ 1，所以这类<b>容量割</b>把 8.2 节的子回路约束包含进来：不经过仓库的小圈，同样被排除。</p></div>
+        </div>
+        <p>求解的思路也是两种，对应两种分解：<b>先分组、再排路线</b>（cluster-first, route-second）：先把客户分给各辆车（广义指派，第 7 章），再对每组求旅行商；或者<b>先排一条大回路、再切开</b>（route-first, cluster-second）。扫描法（Gillett &amp; Miller，1974）是最简单的先分组：客户按相对仓库的角度排序，依次装车，装不下就换新车。</p>
+
+        <div class="predict" id="p3"></div>
+
+        <figure class="fig wide gatehost" id="fig4">
+          <div class="fig-body">
+            <div class="fig-toolbar">
+              <span class="label">方案</span>
+              <div class="seg" id="vrpMode" role="group" aria-label="方案"></div>
+            </div>
+            <div class="statrow" id="vrpStats"></div>
+            <div class="twocol">
+              <div><svg class="map" id="vrpMap" role="img" aria-label="三辆车的路线"></svg></div>
+              <div><div class="saybox" id="vrpSay"></div></div>
+            </div>
+          </div>
+          <figcaption><b>图 8-4</b>带载重的多车路线：客户旁边的小数字是托盘数，每辆车载重 9，最多 3 辆。“最优”由子集动态规划得到（先算每个客户子集的最短单车路线，再划分）；“扫描法”按角度分组，每组用精确算法排路线。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>最优：360，三辆车。</b>22 个托盘，每车至多 9，至少要 ⌈22 / 9⌉ = 3 辆。三条路线的距离是 60、137、163，托盘数 7、8、7。把同一批点交给一辆不限载重的车，只要 255；载重把它撕成三段，多花了 105。</p>
+        <p><b>扫描法：419，比最优多 59（+16%）。</b>它把客户按角度分成了托盘数 9、9、4 的三组，前两辆车装满，第三辆车几乎空着，最后一条路线单独跑了 122。最优的分组三车的负荷更均衡，也更按空间聚成团。这也说明，分组的质量决定了最终的路线，正是第 7 章广义指派要认真求解的原因。</p>
+        <p>子集动态规划要枚举 2<sup><span class="m">m</span></sup> 个客户子集，8 个客户瞬间完成，25 个以上就不现实。现实规模的 CVRP 用的是割平面加分支（分支切割，容量割 + 子回路割）、列生成（第 17、18 章）和启发式（第 21、22 章）。</p>
+      </section>
+
+      <!-- ============================================================ 8.5 -->
+      <section class="chap" id="s5">
+        <h2 class="sec"><span class="no">8.5</span>启发式与局部搜索</h2>
+        <p class="lead">精确方法在规模上有限。实际系统里最常用的是“先构造一个还行的解，再局部改进”。</p>
+        <p><b>最近邻</b>：从仓库出发，每次去离当前点最近的没去过的点。它快、好写，但没有质量保证，最后常常被迫走很远的回头路。<b>2-opt</b>：选回路里的一段，整段反过来走，去掉两条弧、换上两条新弧；只要这样换能缩短路线，就换，直到没有任何一次反转能缩短路线为止。这样的解叫<b>局部最优</b>（对“反转一段”这一类邻域）。</p>
+
+        <figure class="fig wide" id="fig5">
+          <div class="fig-body">
+            <div class="statrow" id="optStats"></div>
+            <div class="twocol">
+              <div>
+                <svg class="map" id="optMap" role="img" aria-label="最近邻、2-opt 与最优回路"></svg>
+                <div class="stepper">
+                  <button class="btn" id="optPrev" type="button">◀ 上一张</button>
+                  <button class="btn primary" id="optNext" type="button">下一步 ▶</button>
+                  <button class="btn ghost" id="optReset" type="button">重来</button>
+                  <span class="txt" id="optTxt"></span>
+                </div>
+              </div>
+              <div><div class="saybox" id="optSay"></div></div>
+            </div>
+          </div>
+          <figcaption><b>图 8-5</b>最近邻 → 2-opt → 最优。橙色是这一步新换上的弧。2-opt 按固定的顺序扫描（先找到的第一个改进就用），到没有改进为止。最后一张是精确解，用来看局部最优离全局最优还有多远。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>最近邻 290</b>，比最优 255 长 13.7%。<b>2-opt 两步：</b>第一步只省了 3（287），第二步省了 25（262），之后没有任何一次反转能缩短路线。<b>262，比最优还长 2.7%。</b>局部搜索停在一个“山谷”里，从这里出发，任何小改动都会变差，要得到 255 需要一次跨度更大的重排。</p>
+        <p>这是第六部分的主题：更大的邻域（Or-opt、Lin–Kernighan）、允许暂时变差（模拟退火、禁忌搜索）、破坏与修复（ALNS），都是在跳出这样的山谷。同时用下界（本章的子回路 LP）告诉你离最优最多还差多少：这里下界等于 255，262 至多比最优差 2.7%。对于度量（满足三角不等式）的旅行商，有近似算法保证：Christofides（1976）的回路不超过最优的 1.5 倍。</p>
+      </section>

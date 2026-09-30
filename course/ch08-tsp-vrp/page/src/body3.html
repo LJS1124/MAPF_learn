@@ -1,0 +1,106 @@
+
+      <!-- ============================================================ 8.6 -->
+      <section class="chap" id="s6">
+        <h2 class="sec"><span class="no">8.6</span>在项目里的位置</h2>
+        <p class="lead">路线问题在你的场景里有几个化身：仓库里的拣选路径、多个出入库口的补货巡回、发运波次的车辆装车与送货。它们的模型都长成本章的样子，差别在图和约束上。</p>
+        <div class="theorems">
+          <div class="thm"><div class="tn">仓库拣选路径</div><p>货位在巷道里，距离不是直线，而是网格图上的最短路（第 6 章）。先算好点对之间的最短路距离，再对要访问的点求旅行商。巷道结构好的时候有专用的规则（S 形、回转、最大间隙），第 14 章会讲。</p></div>
+          <div class="thm"><div class="tn">多车、载重、时间窗</div><p>CVRP 加上每个客户的时间窗就是 VRPTW，是第 15 章的主题。MTZ 的辅助变量在这里很有用：把“第几站”换成“到达时间”，时间窗就是变量的上下界。</p></div>
+          <div class="thm"><div class="tn">求解方式</div><p>几十个点、要证书：MIP 求解器加惰性约束。几百上千个点、要快：先用构造启发式和局部搜索（第 21 章），再用求解器的固定并优化（第 23 章）。规模再大，用列生成的“路线”模型（第 17 章）。</p></div>
+        </div>
+        <p>本章想留下的方法论：<b>约束的个数不是问题，分离才是。</b>只要能高效地找到当前解违反的那一条约束（这里是一次最大流），指数多的约束就可以“按需加”。这个想法在 Benders 分解（第 19 章）、分支定价（第 18 章）里会反复出现。</p>
+      </section>
+
+      <!-- ============================================================ 8.7 -->
+      <section class="chap" id="s7">
+        <h2 class="sec"><span class="no">8.7</span>小结与 Lab</h2>
+        <ol class="takeaways">
+          <li>TSP 的整数模型 = 指派问题（出入度约束）+ “连成一个圈”。只保留出入度约束，解是一堆互不相连的小回路，下界很松（本章例子里低了 22%）。精确解可以用 Held–Karp 动态规划，<span class="m">O</span>(<span class="m">n</span><sup>2</sup> 2<sup><span class="m">n</span></sup>)，只适合二十个点以内。</li>
+          <li>子回路消除约束有指数多个。做法是割平面：解 LP，分离被违反的约束，加入，再解。分离用最大流：把 LP 的弧流量当容量，仓库到某点的最大流小于 1，汇侧的最小割点集就是被违反的约束。分数解也适用。</li>
+          <li>本章例子里割平面循环 4 轮、6 条约束就把下界从 198 推到 255，等于最优；完整的约束有 247 条。求解器里对应的是惰性约束。</li>
+          <li>MTZ 用站序号变量把约束压成多项式个，规模小、好写，但其中的 Big-M 系数让 LP 很弱，只比指派松弛好一点。下界顺序：指派松弛 ≤ MTZ ≤ 子回路约束 ≤ 最优。</li>
+          <li>CVRP 是前几章的拼装：出入度（指派）、载重（装载与背包）、子回路。容量割 ⌈<span class="m">d</span>(<span class="m">S</span>)/<span class="m">Q</span>⌉ 把装箱下界和子回路约束合在一条不等式里。分组的好坏决定路线：扫描法比最优多 16%。</li>
+          <li>构造启发式加局部搜索快，但没有质量保证。2-opt 停在局部最优，本章例子里比最优长 2.7%。用下界可以判断离最优最多还差多少。</li>
+        </ol>
+
+        <h3 class="sub">术语表</h3>
+        <div class="tbl-wrap">
+          <table class="gloss">
+            <thead><tr><th>中文</th><th>English</th><th>在本章的含义</th></tr></thead>
+            <tbody>
+              <tr><td>旅行商问题</td><td>traveling salesman problem (TSP)</td><td>从仓库出发走遍所有点再回来，总距离最小</td></tr>
+              <tr><td>子回路</td><td>subtour</td><td>不经过仓库、只连接一部分点的闭合小圈</td></tr>
+              <tr><td>子回路消除约束</td><td>subtour elimination constraint (SEC)</td><td>Σ<sub>S 内的弧</sub> x ≤ |S| − 1</td></tr>
+              <tr><td>分离</td><td>separation</td><td>在当前 LP 解里找一条被违反的约束；这里用最大流</td></tr>
+              <tr><td>惰性约束</td><td>lazy constraints</td><td>不预先写入模型，解出后检查、需要时再加</td></tr>
+              <tr><td>MTZ 约束</td><td>Miller–Tucker–Zemlin</td><td>用站序号变量 u 排除子回路的紧凑模型</td></tr>
+              <tr><td>Held–Karp</td><td>Held–Karp</td><td>旅行商的动态规划；也指子回路 LP 给出的下界</td></tr>
+              <tr><td>车辆路径问题</td><td>vehicle routing problem (VRP, CVRP)</td><td>多辆车从仓库出发服务客户，带载重的叫 CVRP</td></tr>
+              <tr><td>容量割</td><td>rounded capacity inequality</td><td>进入客户集合 S 的弧数 ≥ ⌈d(S)/Q⌉</td></tr>
+              <tr><td>扫描法</td><td>sweep algorithm</td><td>按相对仓库的角度排序、依次装车的分组启发式</td></tr>
+              <tr><td>最近邻、2-opt</td><td>nearest neighbor, 2-opt</td><td>构造启发式；反转一段的局部搜索</td></tr>
+              <tr><td>局部最优</td><td>local optimum</td><td>邻域里没有更好解的解</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="sub">对照教材</h3>
+        <ul class="refs">
+          <li>Toth &amp; Vigo（编），<em>Vehicle Routing: Problems, Methods, and Applications</em>（第 2 版，SIAM 2014）：CVRP 的模型、容量割、分支切割与启发式。Applegate、Bixby、Chvátal、Cook，<em>The Traveling Salesman Problem: A Computational Study</em>（Princeton，2006）：割平面与分离的实战。</li>
+          <li>Wolsey，<em>Integer Programming</em>（第 2 版，Wiley 2020）：TSP 的模型与子回路约束、惰性约束的思路；Cook、Cunningham、Pulleyblank、Schrijver，<em>Combinatorial Optimization</em>：旅行商与最小割分离。</li>
+          <li>Dantzig、Fulkerson、Johnson，“Solution of a large-scale traveling-salesman problem”（1954）：子回路约束与割平面的起点。Miller、Tucker、Zemlin，“Integer programming formulation of traveling salesman problems”（J. ACM，1960）。Desrochers &amp; Laporte（1991）：MTZ 的提升。</li>
+          <li>Held &amp; Karp，“A dynamic programming approach to sequencing problems”（1962）；Held &amp; Karp（1970）：1-tree 下界。Croes（1958）：2-opt。Christofides（1976）：1.5 倍的近似算法。Gillett &amp; Miller，“A heuristic algorithm for the vehicle-dispatch problem”（1974）：扫描法。</li>
+        </ul>
+
+        <h3 class="sub">本章 Lab</h3>
+        <div class="lab">
+          <div class="lab-grid">
+            <div>
+              <p style="margin-top:0">代码包 <code>ch08-tsp-vrp-lab.zip</code> 随本章一起发放。依赖是 numpy、scipy、pytest；判分用暴力枚举、完整子回路约束的 LP 和 <code>linprog</code>，不依赖你的代码。</p>
+              <table class="labt">
+                <thead><tr><th>练习</th><th>内容</th><th>对应</th></tr></thead>
+                <tbody>
+                  <tr><td>ex1</td><td><b>旅行商</b>：Held–Karp 动态规划、指派松弛与拆回路；先填 4 个预测</td><td>8.1</td></tr>
+                  <tr><td>ex2</td><td><b>子回路消除</b>：用最大流分离，手写根节点的割平面循环；停下时的值必须等于完整约束的 LP</td><td>8.2</td></tr>
+                  <tr><td>ex3</td><td><b>MTZ</b>：建模并求 LP，验证 指派 ≤ MTZ ≤ 子回路 ≤ 最优</td><td>8.3</td></tr>
+                  <tr><td>ex4</td><td><b>CVRP</b>：检查路线、子集动态规划求最优、扫描法</td><td>8.4</td></tr>
+                  <tr><td>ex5</td><td>审 5 个 AI 写的旅行商函数：不看源码，只靠运行结果归类问题</td><td>8.1</td></tr>
+                  <tr><td>挑战</td><td>2-opt 局部搜索：按规定的扫描顺序，步数与页面例子一致</td><td>8.5</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <pre>pip install -r requirements.txt
+pytest -q                     # 全部练习
+pytest tests/test_ex2.py -q   # 单个练习
+
+# 确认判分本身没问题：参考答案应当全部通过
+LAB_TARGET=solutions pytest -q</pre>
+              <p style="font-size:13.5px;color:var(--muted);margin:10px 0 0">练习 1 要求先在 <code>PREDICTION</code> 里写下预测再运行；跑完测试后，终端最后会把你的预测和实际结果并排列出来。</p>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="sub">下一章</h3>
+        <div class="next">
+          <div class="eyebrow">CHAPTER 09</div>
+          <h4>调度问题的语言</h4>
+          <p style="margin:0">第二部分到这里结束：指派、网络、容量、路线，都是“把东西分给谁、怎么走”。第三部分转向“什么时候做”：提升机、站点、堆垛设备都是要排队的机器。下一章先学调度的语言：机器环境、约束、目标三段式记号，Cmax、加权完工时间、延迟等目标，以及一张复杂度地图，告诉你哪些调度问题容易、哪些很难。</p>
+        </div>
+      </section>
+
+      <!-- ============================================================ 8.8 -->
+      <section class="chap" id="s8">
+        <h2 class="sec"><span class="no">8.8</span>自测</h2>
+        <p>8 道题，覆盖本章的全部要点。每题选完立即给出解析。</p>
+        <div class="quiz" id="quiz"></div>
+      </section>
+
+      <footer class="foot">
+        数据说明：本章的全部数字由页面内置的 Held–Karp、单纯形法、最大流分离与割平面循环、MTZ 的 LP、子集动态规划、最近邻与 2-opt 实时计算，并与暴力枚举、完整子回路约束的 LP 和 SciPy 的 <code>linprog</code> 逐项对拍（环境：<span id="envline2"></span>）：随机实例上的最优回路、三种模型的下界、割平面循环的终点、CVRP 的最优值，都与 Lab 的判分数据同源。
+      </footer>
+    </main>
+  </div>
+</div>
+
+<div class="tip" id="tip" hidden></div>

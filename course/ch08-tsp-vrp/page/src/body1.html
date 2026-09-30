@@ -1,0 +1,137 @@
+<div class="page">
+  <div class="topbar">
+    <span><b>物流调度与运筹优化</b> · 系统课程</span>
+    <span>第二部分 组合优化 · 第 8 章</span>
+  </div>
+
+  <div class="layout">
+    <nav class="toc" aria-label="本章目录">
+      <div class="toc-title">本章目录</div>
+      <ol>
+        <li><a href="#s1"><span>8.1</span><span>旅行商与指派松弛</span></a></li>
+        <li><a href="#s2"><span>8.2</span><span>子回路消除的割平面</span></a></li>
+        <li><a href="#s3"><span>8.3</span><span>MTZ 与模型的强弱</span></a></li>
+        <li><a href="#s4"><span>8.4</span><span>车辆路径的骨架</span></a></li>
+        <li><a href="#s5"><span>8.5</span><span>启发式与局部搜索</span></a></li>
+        <li><a href="#s6"><span>8.6</span><span>在项目里的位置</span></a></li>
+        <li><a href="#s7"><span>8.7</span><span>小结与 Lab</span></a></li>
+        <li><a href="#s8"><span>8.8</span><span>自测</span></a></li>
+      </ol>
+      <div class="toc-note">页面里的数字全部实时计算：Held–Karp、指派松弛、割平面循环（用最大流分离）、MTZ 的 LP、子集动态规划的车辆路径、最近邻与 2-opt 都由页面内置代码求解，并与暴力枚举、完整约束的 LP 和 SciPy 逐项对拍。</div>
+    </nav>
+
+    <main>
+      <!-- ============================================================ HERO -->
+      <section class="hero">
+        <div class="eyebrow">CHAPTER 08 · 组合优化</div>
+        <h1><span class="no">8</span>旅行商与车辆路径入门：约束多到写不完时怎么办</h1>
+        <p class="sub">一辆车走遍若干个货位再回到仓库，是最经典的路线问题。它的模型只比第 5 章的指派多一个要求：所有的弧要连成一个圈。这一个要求需要指数多的约束。这一章看两种应对：不一次写完、需要时再加（割平面），和引入辅助变量把它压缩成多项式个约束（MTZ），并把载重加进来，得到车辆路径问题的骨架。</p>
+        <div class="hero-grid">
+          <div class="card">
+            <h3>学完本章，你能</h3>
+            <ol class="goals">
+              <li>写出旅行商的整数模型，说明只保留出入度约束就是第 5 章的指派问题，它的解为什么是一堆互不相连的小回路。</li>
+              <li>写出子回路消除约束，用最大流分离被违反的约束，手写根节点的割平面循环。</li>
+              <li>写出 MTZ 模型，说明它为什么规模小但 LP 下界弱。</li>
+              <li>写出带载重的车辆路径（CVRP）的模型骨架，看出它由指派、装载和旅行商拼成；会用最近邻和 2-opt，并知道局部搜索停在哪里。</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>本章信息</h3>
+            <dl class="meta">
+              <div><dt>用时</dt><dd>阅读与交互 80–110 分钟，Lab 3 小时左右</dd></div>
+              <div><dt>前置</dt><dd>第 4 章（割平面、惰性约束）、第 5、6、7 章（指派、最大流与最小割、覆盖割与载重）。会读 Python 代码。</dd></div>
+              <div><dt>对拍</dt><dd><span class="mono" id="envline"></span>；本章的算法由页面内置代码实现，不依赖求解器。</dd></div>
+              <div><dt>配套</dt><dd>Lab 代码包：5 个练习 + 1 个挑战，含手写的 Held–Karp、割平面循环、车辆路径的子集动态规划，pytest 自动判分</dd></div>
+            </dl>
+          </div>
+        </div>
+        <div class="roadmap" aria-label="课程路线">
+          <div><b>PART 1</b>数学规划基础</div>
+          <div class="now"><b>PART 2</b>组合优化</div>
+          <div><b>PART 3</b>调度理论</div>
+          <div><b>PART 4</b>路径与波次</div>
+          <div><b>PART 5</b>大规模方法</div>
+          <div><b>PART 6</b>启发式</div>
+          <div><b>PART 7</b>多智能体时空规划</div>
+          <div><b>PART 8</b>动态与不确定</div>
+        </div>
+        <div class="roadmap-cap">第二部分 组合优化：指派问题与匈牙利算法 → 最短路与网络流 → 带容量的指派与背包 → <b>旅行商与车辆路径入门（本章）</b>。</div>
+      </section>
+
+      <!-- ============================================================ 8.1 -->
+      <section class="chap" id="s1">
+        <h2 class="sec"><span class="no">8.1</span>旅行商与指派松弛</h2>
+        <p class="lead">一辆车从仓库出发，要走遍 8 个货位，再回到仓库，总行驶距离最小。这就是旅行商问题（TSP）。它是仓库拣选路径、巡检路线、补货路线的共同骨架。</p>
+        <p>设 <span class="m">x</span><sub class="m">ij</sub> = 1 表示车从点 <span class="m">i</span> 直接开到点 <span class="m">j</span>。点 0 是仓库，一共 <span class="m">n</span> = 9 个点：</p>
+        <div class="formula one">
+          <span class="k">TSP</span><span class="e">min Σ <i>c</i><sub>ij</sub><i>x</i><sub>ij</sub>,　Σ<sub>j</sub> <i>x</i><sub>ij</sub> = 1,　Σ<sub>i</sub> <i>x</i><sub>ij</sub> = 1,　<i>x</i><sub>ij</sub> ∈ {0, 1}，还要连成一个圈</span><span class="n">前三项是出入度约束；最后一项要另外写</span>
+        </div>
+        <p>前面的部分你已经见过：每个点选一个后继，每个点只被选一次，这就是第 5 章的<b>指派问题</b>（只不过“点选后继”，且不许选自己）。它有全单模的约束矩阵，LP 直接给整数解，用匈牙利算法就能解。</p>
+        <p>缺的是“连成一个圈”。指派问题只保证每个点有一进一出，不保证所有点在同一个圈里，它的解是<b>一堆互不相连的小回路</b>（置换的圈分解）。把“连成一个圈”这一条去掉，就是 TSP 的一个松弛，最优值是 TSP 的下界。</p>
+
+        <div class="predict" id="p1"></div>
+
+        <figure class="fig wide gatehost" id="fig1">
+          <div class="fig-body">
+            <div class="fig-toolbar">
+              <span class="label">显示</span>
+              <div class="seg" id="tspMode" role="group" aria-label="显示的解"></div>
+            </div>
+            <div class="statrow" id="tspStats"></div>
+            <div class="twocol">
+              <div><svg class="map" id="tspMap" role="img" aria-label="9 个点：指派松弛的解或最优回路"></svg></div>
+              <div><div class="saybox" id="tspSay"></div></div>
+            </div>
+          </div>
+          <figcaption><b>图 8-1</b>仓库（方块）与 8 个货位，距离是取整的直线距离。“指派松弛的解”只有出入度约束（第 5 章的指派问题，页面内置单纯形法求解），不同颜色是不同的回路；“最优回路”由 Held–Karp 动态规划得到。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>指派松弛：198，四个回路。</b>{仓, 2}、{1, 7, 8}、{3, 5}、{4, 6}：相邻的几个点两两互为后继，形成一个个小圈。每个点的出入度都是 1，约束全满足，但没有一辆车能这样开：它们互不相连。</p>
+        <p><b>最优回路：255。</b>差的 57 就是“所有点必须连成一个圈”的代价。用下界的语言说：这个松弛给出的下界 198，比最优低了 22%，太松，只靠它不能剪枝，需要把“连成一个圈”写进模型。</p>
+        <p>精确解可以用动态规划（Held–Karp）：<span class="m">dp</span>[<span class="m">S</span>][<span class="m">k</span>] 是从仓库出发走遍集合 <span class="m">S</span>、停在 <span class="m">k</span> 的最短路程，时间 <span class="m">O</span>(<span class="m">n</span><sup>2</sup> 2<sup><span class="m">n</span></sup>)。9 个点几乎是瞬间，20 个点已经需要几十亿次运算，再多就不行了。这也是为什么需要整数规划的方法，而不是枚举。</p>
+      </section>
+
+      <!-- ============================================================ 8.2 -->
+      <section class="chap" id="s2">
+        <h2 class="sec"><span class="no">8.2</span>子回路消除的割平面</h2>
+        <p class="lead">要把“连成一个圈”写成线性约束，办法是禁止每一个小圈：对不含仓库的任意点集 <span class="m">S</span>，圈内的弧不能把 <span class="m">S</span> 里的点连成闭环。</p>
+        <div class="formula one">
+          <span class="k">子回路消除</span><span class="e">Σ<sub>i∈S, j∈S, i≠j</sub> <i>x</i><sub>ij</sub> ≤ |<i>S</i>| − 1,　对所有 <i>S</i> ⊆ {1, …, <i>n</i>−1}, |<i>S</i>| ≥ 2</span><span class="n">S 里 |S| 个点，最多有 |S|−1 条弧留在 S 里；否则就闭合成圈</span>
+        </div>
+        <p>这样的 <span class="m">S</span> 有 2<sup><span class="m">n</span>−1</sup> − <span class="m">n</span> 个，9 个点就有 247 个，30 个点超过五亿。一次写完不现实。办法和第 7 章的覆盖割一样：<b>先不写，需要时再加</b>。</p>
+        <ol class="steps">
+          <li>只用出入度约束解 LP。</li>
+          <li><b>分离</b>：找 LP 解违反了哪些子回路约束。</li>
+          <li>把找到的约束加进去，再解，回到第 2 步；找不到违反的约束就停。</li>
+        </ol>
+        <p>分离怎么做？出入度约束成立时，子回路约束等价于“有弧从 <span class="m">S</span> 外面进来”：<span class="m">S</span> 内部的弧数 = |<span class="m">S</span>| − 进入 <span class="m">S</span> 的弧数，所以内部的弧至多 |<span class="m">S</span>| − 1，当且仅当进入 <span class="m">S</span> 的弧数（的和）至少 1。换句话说：<b>从仓库到 <span class="m">S</span> 里的每个点，都要能送过去 1 个单位的流量。</b>这正是第 6 章的最大流：把 LP 解的 <span class="m">x</span><sub class="m">ij</sub> 当作弧的容量，对每个点 <span class="m">t</span> 求仓库到 <span class="m">t</span> 的最大流；流量小于 1，最小割里汇点那一侧的点集就是被违反的 <span class="m">S</span>。这对分数解也成立，一次最大流就能找到最违反的那一组。</p>
+
+        <figure class="fig wide" id="fig2">
+          <div class="fig-body">
+            <div class="twocol">
+              <div>
+                <svg class="map" id="secMap" role="img" aria-label="每一轮 LP 的解"></svg>
+                <div class="stepper">
+                  <button class="btn" id="secPrev" type="button">◀ 上一轮</button>
+                  <button class="btn primary" id="secNext" type="button">下一轮 ▶</button>
+                  <button class="btn ghost" id="secAll" type="button">到最后</button>
+                  <button class="btn ghost" id="secReset" type="button">重来</button>
+                  <span class="txt" id="secTxt"></span>
+                </div>
+              </div>
+              <div>
+                <svg class="chart" id="secChart" role="img" aria-label="下界随轮数上升"></svg>
+                <div class="saybox" id="secSay"></div>
+              </div>
+            </div>
+          </div>
+          <figcaption><b>图 8-2</b>根节点的割平面循环。左：这一轮 LP 的解（虚线是分数弧）；橙色圈住的点集是这一轮分离出来的子回路约束。右：下界的变化，最右边是最优回路 255。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>第 1 轮</b>就是 8.1 节的指派松弛，198，四个回路。仓库所在的回路 {仓, 2} 里的点当然从仓库可达，但 {3, 5}、{4, 6}、{1, 7, 8} 三组点被孤立在外面：仓库到它们的最大流是 0，各产生一条约束。</p>
+        <p><b>第 2 轮</b>LP 上升到 219，重新连出了几条更长的弧，出现了新的小圈 {1, 7} 和一大块 {2, 3, 4, 5, 6}；<b>第 3 轮</b>235，再分离出 {3, 4, 5, 6}；<b>第 4 轮</b>255，仓库到每个点的最大流都是 1，LP 解是一条完整的回路，等于最优。一共只加了 6 条约束，完整的有 247 条。</p>
+        <p>这个例子里每一轮 LP 的解碰巧都是整数点。一般的实例上，子回路 LP 的最优解还可能带分数，这时下界（Held–Karp 下界）通常离最优只差百分之一到二，剩下的差距交给分支。求解器里这就是<b>惰性约束</b>（lazy constraints）：约束不预先写入，解出整数解后再检查、再加。</p>
+      </section>
