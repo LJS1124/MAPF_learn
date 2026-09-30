@@ -10,6 +10,7 @@
 | 第 8 章 旅行商与车辆路径入门 | [ch08-tsp-vrp.html](ch08-tsp-vrp.html) | [ch08-tsp-vrp.pdf](ch08-tsp-vrp.pdf) |
 | 第 9 章 调度问题的语言 | [ch09-scheduling-language.html](ch09-scheduling-language.html) | [ch09-scheduling-language.pdf](ch09-scheduling-language.pdf) |
 | 第 10 章 单机与并行机 | [ch10-single-parallel.html](ch10-single-parallel.html) | [ch10-single-parallel.pdf](ch10-single-parallel.pdf) |
+| 第 11 章 流水车间与作业车间 | [ch11-shop-scheduling.html](ch11-shop-scheduling.html) | [ch11-shop-scheduling.pdf](ch11-shop-scheduling.pdf) |
 
 - **网页**是单个文件：样式、脚本、数据都在里面，不请求任何外部资源。图可以拖动、点击，数字实时计算。字体使用系统自带的中文字体。
 - **PDF**里，“先预测”的题和自测已经展开了答案与解析，逐步回放的图停在有信息的位置（最后一步等），所以图是静态的；想自己操作图，请用网页版。

@@ -1,0 +1,72 @@
+
+      <!-- ============================================================ 11.3 -->
+      <section class="chap" id="s3">
+        <h2 class="sec"><span class="no">11.3</span>作业车间与析取图</h2>
+        <p class="lead"><b>作业车间</b>（job shop）里，每个作业有自己的路线：作业 J1 先上 M3，再 M2，最后 M1；作业 J2 的路线是 M3、M1、M2。同一台机器一次只做一个作业。记号 J<span class="m">m</span> | | C<sub>max</sub>。四向车仓库里“每个托盘要经过不同的一串站点”就是这个模型。它比流水车间难得多：流水车间是它的特例，所以 J3 | | C<sub>max</sub> 也是强 NP 难的； 10 × 10 的经典实例（Fisher–Thompson，1963）在提出后二十多年里都没有被证明最优。</p>
+        <p>用<b>析取图</b>（disjunctive graph）来表示：</p>
+        <ul class="refs">
+          <li><b>节点</b>是工序（作业 <span class="m">j</span> 的第 <span class="m">k</span> 道），节点权重是它的加工时间。</li>
+          <li><b>路线弧</b>（实线灰色）：同一作业的相邻工序，前一道做完才能做后一道。</li>
+          <li><b>析取弧</b>：同一台机器上的两个工序不能同时做，要么 A 在 B 前，要么 B 在 A 前，这是一个二选一（“析取”）。<b>选定每台机器上的作业顺序</b>，就是为每一对二选一定下方向，得到一张有向图。</li>
+        </ul>
+        <p>一个选择对应一个可行调度，当且仅当这张有向图<b>没有环</b>。有环意味着“A 要等 B，B 要等 C，C 又要等 A”，谁也无法开工。无环时，每道工序的最早开始时刻就是从起点到它的最长路，<b>C<sub>max</sub> 是整张图里的最长路</b>，最长路上的工序叫<b>关键工序</b>，缩短不在关键路径上的工序不会让 C<sub>max</sub> 变小。</p>
+        <div class="formula one">
+          <span class="k">析取图求值</span><span class="e"><i>C</i><sub>max</sub> = 图中的最长路（按拓扑序一遍扫描），有环则不可行</span><span class="n">O(工序数 + 弧数)</span>
+        </div>
+        <p>所以作业车间的搜索空间是“每台机器上的一个排列”，共 (<span class="m">n</span>!)<sup class="m">m</sup> 个组合，其中一部分带环。</p>
+
+        <div class="predict" id="p3"></div>
+
+        <figure class="fig wide gatehost" id="fig3">
+          <div class="fig-body">
+            <div class="fig-toolbar">
+              <span class="label">预置</span><div class="seg" id="jgPre" role="group" aria-label="预置的机器顺序"></div>
+              <button class="btn ghost" id="jgRand" type="button">随机打乱</button>
+            </div>
+            <div id="jgOrders" aria-label="每台机器上的作业顺序"></div>
+            <div class="flags" id="jgFlags"></div>
+            <svg class="dgraph" id="jgGraph" role="img" aria-label="作业车间的析取图"></svg>
+            <svg class="gantt" id="jgGantt" role="img" aria-label="作业车间的甘特图"></svg>
+            <div class="statrow" id="jgStats"></div>
+            <div class="saybox" id="jgSay"></div>
+          </div>
+          <figcaption><b>图 11-3</b>3 个作业、3 台机器：J1 走 M3→M2→M1（时间 2、1、3），J2 走 M3→M1→M2（1、4、2），J3 走 M2→M1→M3（2、5、2）。节点颜色是机器，灰色实线是路线弧，彩色虚线弧是选定的机器顺序；黑框和粗实线是关键路径。用每台机器上的 ◀ ▶ 改变顺序，图和甘特图同步变化。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>每台机器都按 J1、J2、J3：</b>可行，C<sub>max</sub> = 21，关键路径 J1·M3 → J1·M2 → J1·M1 → J2·M1 → J2·M2 → J3·M2 → J3·M1 → J3·M3，几乎把所有工序串成了一条线。<b>最优：</b>C<sub>max</sub> = 13，三台机器上的顺序分别是 M1：J2、J3、J1，M2：J3、J2、J1，M3：J2、J1、J3；关键路径是 J2·M3 → J2·M1 → J3·M1 → J1·M1，长度 1 + 4 + 5 + 3 = 13。下界（最忙的机器或最长的作业）是 12，最优比它大 1。</p>
+        <p><b>有环的例子：</b>M1、M2 上都是 J1、J2、J3，M3 上却是 J3、J2、J1。图里出现红色的环，页面给出具体的环。<b>216 种机器顺序里只有 63 种是可行的</b>，不到三分之一。这个比例在大规模问题里会更小，所以直接在“机器顺序”上做局部搜索时，要小心邻域产生的解是否有环。</p>
+        <p>需要留意，一个可行的机器顺序对应“半主动调度”：每道工序都尽可能早开始。C<sub>max</sub> 是正规目标（完工时间变晚不会变好），所以最优调度总可以取成半主动的，搜索机器顺序就够了。</p>
+      </section>
+
+      <!-- ============================================================ 11.4 -->
+      <section class="chap" id="s4">
+        <h2 class="sec"><span class="no">11.4</span>两种建模：大 M 的 MIP 与 CP-SAT</h2>
+        <p class="lead">同一个作业车间问题，可以写成混合整数规划，也可以写成约束规划（CP）。它们描述的是同一个问题，但求解器的表现差别很大。这一节把两个模型并排放，看差别在哪里。</p>
+        <h3 class="sub">大 M 的 MIP 模型</h3>
+        <p>变量：每道工序的开始时刻 <span class="m">s</span><sub class="m">o</sub>，最大完工时间 <span class="m">C</span>，以及同一台机器上每一对工序 (<span class="m">a</span>, <span class="m">b</span>) 的顺序变量 <span class="m">y</span><sub class="m">ab</sub> ∈ {0, 1}（1 表示 <span class="m">a</span> 在 <span class="m">b</span> 之前）。约束：</p>
+        <div class="formula">
+          <span class="k">路线</span><span class="e"><i>s</i><sub>j,k+1</sub> ≥ <i>s</i><sub>jk</sub> + <i>p</i><sub>jk</sub></span><span class="n">同一作业的相邻工序</span>
+        </div>
+        <div class="formula">
+          <span class="k">析取</span><span class="e"><i>s</i><sub>b</sub> ≥ <i>s</i><sub>a</sub> + <i>p</i><sub>a</sub> − <i>M</i>(1 − <i>y</i><sub>ab</sub>)，　<i>s</i><sub>a</sub> ≥ <i>s</i><sub>b</sub> + <i>p</i><sub>b</sub> − <i>M</i> <i>y</i><sub>ab</sub></span><span class="n"><i>y</i> = 1 时第一条起作用，<i>y</i> = 0 时第二条起作用；另一条被 <i>M</i> 放松</span>
+        </div>
+        <div class="formula one">
+          <span class="k">目标</span><span class="e">min <i>C</i>，　<i>C</i> ≥ <i>s</i><sub>j,末</sub> + <i>p</i><sub>j,末</sub></span><span class="n">每个作业的最后一道工序</span>
+        </div>
+        <p>这是第 4 章讲过的“大 M”写法。它的问题也是第 4 章的问题：<span class="m">M</span> 取工序时间之和（一个安全的上界），把 <span class="m">y</span> 放松成 [0, 1] 以后，两条析取约束几乎不起作用，LP 松弛值很小。对本章的 3 × 3 例子，<b>LP 松弛值只有 9.0</b>，而下界是 12、最优是 13。松弛这么弱，分支定界就得枚举大量的 <span class="m">y</span> 组合才能证明最优。</p>
+        <h3 class="sub">CP-SAT 的模型</h3>
+        <p>CP-SAT 直接支持<b>区间变量</b>和<b>不重叠约束</b>：每道工序是一个区间（开始、时长、结束），每台机器上的区间用一个 <code>NoOverlap</code> 约束，作业内部用 <code>start ≥ 前一道的 end</code>。没有 <span class="m">M</span>，没有 0/1 的顺序变量，求解器内部知道“不重叠”的含义，会做<b>边界推理</b>：比如推断“这几个工序合起来至少占用多长的时间窗”，并把传播的结果学成子句。</p>
+
+        <div class="tbl-wrap"><table class="lbt" id="cmpTable" aria-label="MIP 与 CP-SAT 的实测对比"></table></div>
+        <div class="fig-cap-plain" style="font-size:13px;color:var(--muted);margin:6px 0 14px"><b>表 11-1</b>同一批随机作业车间实例（作业数 × 机器数，每个作业走遍所有机器，加工时间 1–9）上，用 Lab 参考答案实测。MIP 是 SciPy 的 HiGHS，限时 30 秒；CP-SAT 是 OR-Tools，单线程。“MIP 结果”一栏是限时内找到的最好解 / 证明的对偶界。用时依赖机器，只有数量级有参考意义。</div>
+
+        <h3 class="sub">读表</h3>
+        <p>3 × 3 时两者都是毫秒级，看不出差别。到 8 × 8（64 道工序），MIP 花了 7.9 秒才证明最优，CP-SAT 只要 0.02 秒。到 10 × 10 和 12 × 10，MIP 在 30 秒内没有证明最优：10 × 10 找到了 52，对偶界只到 42，最优值是 47，还有很大的间隙；12 × 10 找到 57，对偶界 41.57，最优 48。CP-SAT 在同样的实例上都在 0.1 秒内证明了最优。</p>
+        <p>这个差别来自问题的结构，与 CP-SAT 是否普遍更强无关。作业车间由“不重叠”这种时间窗推理主导，CP 的模型和推理正好对口，MIP 的松弛却被大 M 破坏。反过来，如果问题的主要难点在成本的线性结构上（第 5–7 章的指派、网络流、背包），MIP 的强松弛和切平面才是优势。<b>选择建模语言要看问题的结构</b>，这是本章最重要的一条建议。</p>
+        <p>最后一个提醒，模型正确不等于模型好用。两个模型的最优值必须相同（Lab 的练习 4 用 pytest 检查这一点），求解速度才是要比的东西。</p>
+        <h3 class="sub">参考实现（Lab 练习 4）</h3>
+        <p>下面两段代码来自 Lab 的参考答案。第一段构造大 M 模型并交给 HiGHS；第二段是 CP-SAT。</p>
+        <!--CODE:mip_jobshop-->
+        <!--CODE:cp_jobshop-->
+      </section>

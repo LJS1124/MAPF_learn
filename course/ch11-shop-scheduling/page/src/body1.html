@@ -1,0 +1,139 @@
+<div class="page">
+  <div class="topbar">
+    <span><b>物流调度与运筹优化</b> · 系统课程</span>
+    <span>第三部分 调度理论 · 第 11 章</span>
+  </div>
+
+  <div class="layout">
+    <nav class="toc" aria-label="本章目录">
+      <div class="toc-title">本章目录</div>
+      <ol>
+        <li><a href="#s1"><span>11.1</span><span>流水车间与 Johnson 规则</span></a></li>
+        <li><a href="#s2"><span>11.2</span><span>三台以上与 NEH</span></a></li>
+        <li><a href="#s3"><span>11.3</span><span>作业车间与析取图</span></a></li>
+        <li><a href="#s4"><span>11.4</span><span>MIP 与 CP-SAT</span></a></li>
+        <li><a href="#s5"><span>11.5</span><span>在项目里的位置</span></a></li>
+        <li><a href="#s6"><span>11.6</span><span>小结与 Lab</span></a></li>
+        <li><a href="#s7"><span>11.7</span><span>自测</span></a></li>
+      </ol>
+      <div class="toc-note">页面里的数字全部实时计算：流水车间的完工时间递推、Johnson 顺序、NEH 的每一步插入、作业车间的析取图最长路与环检测都由页面内置代码完成，并与暴力枚举对拍。11.4 的求解器对比表是 Lab 参考答案实测的结果。</div>
+    </nav>
+
+    <main>
+      <!-- ============================================================ HERO -->
+      <section class="hero">
+        <div class="eyebrow">CHAPTER 11 · 调度理论</div>
+        <h1><span class="no">11</span>流水车间与作业车间：作业要走过好几台机器</h1>
+        <p class="sub">前两章的作业只在一台机器（或一组相同的机器）上加工一次。实际的作业常常要依次经过好几道工序：托盘入库、上提升机、出库；一个订单要经过几个站点。这一章看两种最基本的多工序模型：所有作业走同样路线的流水车间，和每个作业路线不同的作业车间。前者在两台机器时有漂亮的规则，后者要用析取图来表示，并且从这里开始，建模方式（MIP 还是 CP）会明显影响能解多大的问题。</p>
+        <div class="hero-grid">
+          <div class="card">
+            <h3>学完本章，你能</h3>
+            <ol class="goals">
+              <li>用递推公式算出流水车间任意顺序的 C<sub>max</sub>，手写 Johnson 规则解 F2 | | C<sub>max</sub>，并说明为什么三台以上没有这样的规则。</li>
+              <li>用 NEH 启发式解一般的流水车间，看出它为什么比随便排好，又为什么不保证最优。</li>
+              <li>把作业车间的一个调度写成析取图：选定每台机器上的作业顺序，C<sub>max</sub> 就是最长路，出现环就说明顺序不可行。</li>
+              <li>为同一个作业车间问题写出大 M 的 MIP 和 CP-SAT 两种模型，并解释为什么规模一大，两者差距悬殊。</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>本章信息</h3>
+            <dl class="meta">
+              <div><dt>用时</dt><dd>阅读与交互 80–110 分钟，Lab 3–4 小时</dd></div>
+              <div><dt>前置</dt><dd>第 9、10 章（调度记号、C<sub>max</sub>、交换论证）；第 4 章的大 M 建模。会读 Python 代码。</dd></div>
+              <div><dt>对拍</dt><dd><span class="mono" id="envline"></span>；页面里的算法由内置代码实现，不依赖求解器，11.4 的对比表来自 Lab 参考答案的实测。</dd></div>
+              <div><dt>配套</dt><dd>Lab 代码包：5 个练习 + 1 个挑战，含流水车间 C<sub>max</sub> 与 Johnson、NEH、析取图求值、MIP 与 CP-SAT 两种模型、派工规则，pytest 自动判分</dd></div>
+            </dl>
+          </div>
+        </div>
+        <div class="roadmap" aria-label="课程路线">
+          <div><b>PART 1</b>数学规划基础</div>
+          <div><b>PART 2</b>组合优化</div>
+          <div class="now"><b>PART 3</b>调度理论</div>
+          <div><b>PART 4</b>路径与波次</div>
+          <div><b>PART 5</b>大规模方法</div>
+          <div><b>PART 6</b>启发式</div>
+          <div><b>PART 7</b>多智能体时空规划</div>
+          <div><b>PART 8</b>动态与不确定</div>
+        </div>
+        <div class="roadmap-cap">第三部分 调度理论：调度问题的语言 → 单机与并行机 → <b>流水车间与作业车间（本章）</b>→ 资源与时间窗约束。</div>
+      </section>
+
+      <!-- ============================================================ 11.1 -->
+      <section class="chap" id="s1">
+        <h2 class="sec"><span class="no">11.1</span>流水车间与 Johnson 规则</h2>
+        <p class="lead"><b>流水车间</b>（flow shop）里有 <span class="m">m</span> 台机器，每个作业都按同样的次序经过它们：先第 1 台，再第 2 台……记号是 F<span class="m">m</span> | | C<sub>max</sub>。作业 <span class="m">j</span> 在第 <span class="m">k</span> 台机器上的加工时间是 <span class="m">p</span><sub class="m">jk</sub>。入库 → 提升机 → 出库就是一个 F3。</p>
+        <p>每台机器一次只做一个作业，一个作业同一时刻只在一台机器上。最常见的限制是<b>置换流水车间</b>（permutation flow shop）：所有机器上的作业顺序相同，于是决策只有一个，就是作业的排列。对 C<sub>max</sub> 而言，两台和三台机器时最优调度总可以取成置换的，所以下面只看排列。</p>
+        <p>给定排列，各作业在各机器上的完工时间由一个递推给出。设 <span class="m">C</span><sub class="m">jk</sub> 是排在第 <span class="m">j</span> 位的作业在机器 <span class="m">k</span> 上的完工时间：</p>
+        <div class="formula one">
+          <span class="k">完工时间递推</span><span class="e"><i>C</i><sub>jk</sub> = max( <i>C</i><sub>j−1,k</sub>, <i>C</i><sub>j,k−1</sub> ) + <i>p</i><sub>jk</sub></span><span class="n">要等这台机器上一个作业做完，也要等自己在上一台机器上做完</span>
+        </div>
+        <p>C<sub>max</sub> 就是最后一个作业在最后一台机器上的完工时间。这个递推是 O(<span class="m">nm</span>) 的，所以评价一个排列很便宜，难的是在 <span class="m">n</span>! 个排列里找最好的。</p>
+        <p><b>两台机器：Johnson 规则</b>（1954）。F2 | | C<sub>max</sub> 有一个多项式的最优算法。记作业 <span class="m">j</span> 在两台机器上的时间为 <span class="m">a</span><sub class="m">j</sub>、<span class="m">b</span><sub class="m">j</sub>：</p>
+        <ol class="steps">
+          <li>把 <span class="m">a</span><sub class="m">j</sub> ≤ <span class="m">b</span><sub class="m">j</sub> 的作业放进集合 1，把 <span class="m">a</span><sub class="m">j</sub> &gt; <span class="m">b</span><sub class="m">j</sub> 的放进集合 2。</li>
+          <li>集合 1 按 <span class="m">a</span> 从小到大排在前面，集合 2 按 <span class="m">b</span> 从大到小排在后面。</li>
+        </ol>
+        <p>直觉是两头夹：第二台机器要等第一台送来作业才能开工，所以让 <span class="m">a</span> 小的作业先走，第二台机器早早有活干；最后一个作业在第二台机器上做完就结束了，所以让 <span class="m">b</span> 小的作业留到最后，收尾的空转最短。证明用的是交换论证，和上一章一样：对相邻的两个作业 <span class="m">i</span>、<span class="m">j</span>，若 min(<span class="m">a</span><sub class="m">i</sub>, <span class="m">b</span><sub class="m">j</sub>) ≤ min(<span class="m">a</span><sub class="m">j</sub>, <span class="m">b</span><sub class="m">i</sub>)，则把 <span class="m">i</span> 排在 <span class="m">j</span> 前面不会更差。这个两两比较的关系是可以传递的，所以能推出整个顺序。</p>
+
+        <div class="predict" id="p1"></div>
+
+        <figure class="fig wide gatehost" id="fig1">
+          <div class="fig-body">
+            <div class="fig-toolbar">
+              <span class="label">预置顺序</span><div class="seg" id="jsPre" role="group" aria-label="预置顺序"></div>
+            </div>
+            <div class="mrow" style="margin-bottom:6px"><span class="mn">顺序</span><span id="jsChips"></span></div>
+            <div class="flags" id="jsFlags"></div>
+            <svg class="gantt" id="jsGantt" role="img" aria-label="两台机器的流水车间甘特图"></svg>
+            <div class="statrow" id="jsStats"></div>
+            <div class="twocol">
+              <div class="saybox" id="jsSay"></div>
+              <div class="tbl-wrap"><table class="lbt" id="jsTable" aria-label="六个作业在两台机器上的加工时间"></table></div>
+            </div>
+          </div>
+          <figcaption><b>图 11-1</b>两台机器的流水车间（M1 是入库口，M2 是提升机）。方块里是作业编号，红色虚线是 C<sub>max</sub>。用 ◀ ▶ 可以手动调整任何一个位置，也可以直接套用预置的顺序。Johnson 顺序总是最优；最优顺序不止一个（这个例子有 12 个），Johnson 只是其中一个。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>原顺序 J1…J6：</b>C<sub>max</sub> = 35。J2 在第一台机器上要 9，第二台机器在这段时间里几乎全部空着。<b>Johnson 顺序：</b>集合 1 是 J1、J6、J2（a 依次为 1、1、9，并列取下标小的），集合 2 是 J3、J5、J4（b 依次为 5、4、2）。得到 J1 → J6 → J2 → J3 → J5 → J4，C<sub>max</sub> = 31，与枚举 720 种得到的最优一致。<b>最差顺序：</b>41，比最优多 10。</p>
+        <p>试着把 Johnson 顺序里的两个作业交换。绝大多数交换会让 C<sub>max</sub> 变大或不变，不会变小。这就是最优的含义。</p>
+        <h3 class="sub">三台机器</h3>
+        <p>F3 | | C<sub>max</sub> 是<b>强 NP 难</b>的（Garey、Johnson、Sethi，1976），所以不能指望像 Johnson 那样的规则。有一个特殊情形可以化简：若第二台机器被“压住”，即 min <span class="m">a</span> ≥ max <span class="m">b</span> 或 min <span class="m">c</span> ≥ max <span class="m">b</span>（<span class="m">a</span>、<span class="m">b</span>、<span class="m">c</span> 是三台机器的时间），那么把每个作业合成 (<span class="m">a</span>+<span class="m">b</span>, <span class="m">b</span>+<span class="m">c</span>) 两台虚拟机器，再用 Johnson 规则就是最优的。一般情形没有这个性质，下一节用启发式。</p>
+      </section>
+
+      <!-- ============================================================ 11.2 -->
+      <section class="chap" id="s2">
+        <h2 class="sec"><span class="no">11.2</span>三台以上：NEH 启发式</h2>
+        <p class="lead">机器多了以后，实际中最常用的构造启发式是 <b>NEH</b>（Nawaz、Enscore、Ham，1983）。它的想法很简单：加工时间大的作业更“难安排”，先安排它们；每个作业都放在当前最合适的位置。</p>
+        <ol class="steps">
+          <li>按总加工时间 Σ<sub>k</sub> <span class="m">p</span><sub class="m">jk</sub> 从大到小排出插入次序。</li>
+          <li>取第一个作业，形成只有一个作业的部分顺序。</li>
+          <li>依次取下一个作业，试着把它插进部分顺序的每一个位置（含最前和最后），用完工时间递推算出每个位置的 C<sub>max</sub>，保留最小的（并列取靠前的位置）。</li>
+        </ol>
+        <p>插入第 <span class="m">k</span> 个作业要试 <span class="m">k</span> 个位置，总共 O(<span class="m">n</span>²) 次评价，n = 100 也只需要几毫秒。它在流水车间的文献里几乎是“必比的基线”，很多更复杂的方法（禁忌搜索、迭代贪心）都以 NEH 的解为起点。</p>
+
+        <div class="predict" id="p2"></div>
+
+        <figure class="fig wide gatehost" id="fig2">
+          <div class="fig-body">
+            <div class="statrow" id="nhStats"></div>
+            <svg class="gantt" id="nhGantt" role="img" aria-label="三台机器的流水车间甘特图"></svg>
+            <div class="stepper">
+              <button class="btn" id="nhPrev" type="button">◀ 上一步</button>
+              <button class="btn primary" id="nhNext" type="button">插入下一个作业 ▶</button>
+              <button class="btn ghost" id="nhAll" type="button">做到底</button>
+              <button class="btn ghost" id="nhReset" type="button">重来</button>
+              <span class="txt" id="nhTxt"></span>
+            </div>
+            <div class="twocol">
+              <div class="saybox" id="nhSay"></div>
+              <div class="tbl-wrap"><table class="lbt" id="nhTable" aria-label="当前作业各个插入位置的 C_max"></table></div>
+            </div>
+          </div>
+          <figcaption><b>图 11-2</b>NEH 在 3 台机器、6 个作业（入库口 M1、提升机 M2、出库口 M3）上的逐步插入。表里每一行是一个候选位置，高亮的行是被选中的位置；点其他行可以预览它的甘特图。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p>总加工时间是 J1 15、J2 18、J3 15、J4 18、J5 13、J6 19，所以插入次序是 J6、J2、J4、J1、J3、J5（并列取下标小的）。部分顺序的 C<sub>max</sub> 依次是 19、26、29、33、38、44。最后 NEH 得到 J5 → J1 → J4 → J3 → J6 → J2，C<sub>max</sub> = 44；原顺序 J1…J6 是 52；枚举 720 种得到的最优是 42。NEH 一共只评价了 1 + 2 + 3 + 4 + 5 + 6 = 21 个候选，把 52 压到 44，与最优差 2。</p>
+        <p>它不保证最优。第 5 步插入 J3 时五个候选是 41、40、38、38、42，最小值 38 出现两次，规则取靠前的那个。换一个并列规则，后面的结果可能不同，所以 Lab 的练习 2 把并列规则写死，让结果可以复现。</p>
+      </section>

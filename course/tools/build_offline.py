@@ -27,6 +27,7 @@ CHAPTERS = {
     "ch08-tsp-vrp": ("ch08-tsp-vrp", ["#secAll"]),
     "ch09-scheduling-language": ("ch09-scheduling-language", []),
     "ch10-single-parallel": ("ch10-single-parallel", ["#xcAll", "#moAll"]),
+    "ch11-shop-scheduling": ("ch11-shop-scheduling", ["#nhAll"]),
 }
 
 PRINT_CSS = """

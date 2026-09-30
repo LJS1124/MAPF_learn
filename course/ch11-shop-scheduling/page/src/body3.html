@@ -1,0 +1,112 @@
+
+      <!-- ============================================================ 11.5 -->
+      <section class="chap" id="s5">
+        <h2 class="sec"><span class="no">11.5</span>在项目里的位置</h2>
+        <p class="lead">这一章的模型和四向穿梭车仓库的对应关系很直接，但直接套用之前要先想清楚哪些假设不成立。</p>
+        <h3 class="sub">对应关系</h3>
+        <ul class="refs">
+          <li><b>入库口 → 提升机 → 出库口</b>：一批托盘依次经过三个设备，设备一次只处理一个托盘，正好是 F3 | | C<sub>max</sub>。作业顺序由“先处理哪个托盘”决定，NEH 可以直接当作离线排序的基线。</li>
+          <li><b>托盘走不同的路线</b>：有的托盘要过提升机换层，有的不用；有的要经过分拣站，有的不用。这就是作业车间，路线不同，机器（设备）可以被多个作业竞争。</li>
+          <li><b>小规模精确，大规模换方法</b>：几十道工序以内，CP-SAT 可以证明最优，也可以做在线滚动求解；工序数上千以后，需要第 5、6 部分的分解和启发式。</li>
+        </ul>
+        <h3 class="sub">要小心的假设</h3>
+        <ul class="refs">
+          <li><b>缓冲区是有限的</b>：经典流水车间假设两台机器之间有无限缓冲，作业做完后可以等着。真实的提升机前只能停几个托盘，满了上一站就被阻塞（blocking）。有限缓冲的流水车间没有 Johnson 规则，要另外建模。</li>
+          <li><b>没有转换时间</b>：换层、换向的时间与前后的作业有关（序相关的准备时间），第 9 章的 s<sub>jk</sub> 就是这个。带上它，即使一台机器也是 TSP 型的难问题。</li>
+          <li><b>作业一开始就全部就位</b>：C<sub>max</sub> 的排序适合“一个波次的所有托盘已知”，托盘陆续到达时要用滚动时域，或者改用 11.4 的 CP 模型每隔一段时间重新求解。</li>
+        </ul>
+        <p>Lab 的挑战是一个最常用的<b>派工规则</b>（dispatching rule）：每次在所有“可以开始”的工序里，选最早能开始的一道，并列时选加工时间短的。它算得很快，但在本章的 3 × 3 例子上得到 15，最优是 13。规则给出的是可行解，而不是最优解，把它当作 CP-SAT 的初始解或者对照基线是合适的。</p>
+      </section>
+
+      <!-- ============================================================ 11.6 -->
+      <section class="chap" id="s6">
+        <h2 class="sec"><span class="no">11.6</span>小结与 Lab</h2>
+        <ol class="takeaways">
+          <li>流水车间：所有作业走同样的机器次序，置换调度的 C<sub>max</sub> 由递推 <span class="m">C</span><sub class="m">jk</sub> = max(<span class="m">C</span><sub class="m">j−1,k</sub>, <span class="m">C</span><sub class="m">j,k−1</sub>) + <span class="m">p</span><sub class="m">jk</sub> 在 O(<span class="m">nm</span>) 内算出。</li>
+          <li>F2 | | C<sub>max</sub>：Johnson 规则，<span class="m">a</span> ≤ <span class="m">b</span> 的按 <span class="m">a</span> 升序放前面，<span class="m">a</span> &gt; <span class="m">b</span> 的按 <span class="m">b</span> 降序放后面，最优。第 3 台机器加入后就是强 NP 难。</li>
+          <li>NEH：按总加工时间降序，逐个插到使部分顺序 C<sub>max</sub> 最小的位置。只评价 O(<span class="m">n</span>²) 个候选，通常很接近最优，但没有最坏保证。</li>
+          <li>作业车间：析取图上，节点是工序，路线弧固定，选定每台机器的作业顺序即为析取弧定向。C<sub>max</sub> 是最长路，有环即不可行。3 × 3 的例子里，216 种机器顺序只有 63 种可行。</li>
+          <li>同一个问题的两种模型：大 M 的 MIP 松弛很弱（本章例子 LP 值 9.0，最优 13），规模一大就证明不了最优；CP-SAT 用区间变量和 NoOverlap，10 × 10、12 × 10 都能在 0.1 秒内证明最优。</li>
+          <li>选建模语言要看结构：时间窗和“不重叠”的问题适合 CP，成本线性、网络结构强的问题适合 MIP。</li>
+          <li>在项目里，入库 → 提升机 → 出库是 F3，多路线的托盘是作业车间；有限缓冲、准备时间和陆续到达都会改变结论，需要另外建模。</li>
+        </ol>
+
+        <h3 class="sub">术语表</h3>
+        <div class="tbl-wrap">
+          <table class="gloss">
+            <thead><tr><th>中文</th><th>English</th><th>在本章的含义</th></tr></thead>
+            <tbody>
+              <tr><td>流水车间、置换流水车间</td><td>flow shop, permutation flow shop</td><td>所有作业按同样的机器次序加工；所有机器上的作业顺序也相同</td></tr>
+              <tr><td>Johnson 规则</td><td>Johnson's rule</td><td>F2 | | C<sub>max</sub> 的最优规则</td></tr>
+              <tr><td>NEH 启发式</td><td>NEH heuristic</td><td>按总时间降序，逐个插入最好的位置</td></tr>
+              <tr><td>作业车间</td><td>job shop</td><td>每个作业有自己的机器路线</td></tr>
+              <tr><td>析取图</td><td>disjunctive graph</td><td>工序为点，路线弧固定，同一机器上的工序两两析取</td></tr>
+              <tr><td>关键路径</td><td>critical path</td><td>析取图里的最长路，长度就是 C<sub>max</sub></td></tr>
+              <tr><td>半主动调度</td><td>semi-active schedule</td><td>每道工序都不能在不改变机器顺序的前提下更早开始</td></tr>
+              <tr><td>区间变量、不重叠约束</td><td>interval variable, NoOverlap</td><td>CP-SAT 表示工序和机器互斥的原语</td></tr>
+              <tr><td>派工规则</td><td>dispatching rule</td><td>每次在可开始的工序里按优先规则选一道</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="sub">对照教材</h3>
+        <ul class="refs">
+          <li>Pinedo，<em>Scheduling: Theory, Algorithms, and Systems</em>（第 5 版，Springer 2016）：第 6 章流水车间（Johnson、NEH、有限缓冲）、第 7 章作业车间（析取图、移动瓶颈）。</li>
+          <li>Johnson，“Optimal two- and three-stage production schedules with setup times included”（Naval Research Logistics Quarterly，1954）。Garey、Johnson、Sethi，“The complexity of flowshop and jobshop scheduling”（Mathematics of Operations Research，1976）。</li>
+          <li>Nawaz、Enscore、Ham，“A heuristic algorithm for the m-machine, n-job flow-shop sequencing problem”（Omega，1983）。</li>
+          <li>Roy &amp; Sussmann，“Les problèmes d'ordonnancement avec contraintes disjonctives”（1964）：析取图。Fisher &amp; Thompson（1963）的 10 × 10 实例。</li>
+          <li>Google OR-Tools 文档的 Job Shop 示例（CP-SAT 的区间变量与 NoOverlap）；Brucker，<em>Scheduling Algorithms</em>（Springer 2007）的作业车间章节。</li>
+        </ul>
+
+        <h3 class="sub">本章 Lab</h3>
+        <div class="lab">
+          <div class="lab-grid">
+            <div>
+              <p style="margin-top:0">代码包 <code>ch11-shop-scheduling-lab.zip</code> 随本章一起发放。依赖是 numpy、scipy、ortools、pytest；判分用暴力枚举和第二个独立的求解，不依赖你的代码。</p>
+              <table class="labt">
+                <thead><tr><th>练习</th><th>内容</th><th>对应</th></tr></thead>
+                <tbody>
+                  <tr><td>ex1</td><td><b>流水车间</b>：完工时间递推、Johnson 规则；先填 4 个预测</td><td>11.1</td></tr>
+                  <tr><td>ex2</td><td><b>NEH</b>：逐个插入，并列取靠前的位置</td><td>11.2</td></tr>
+                  <tr><td>ex3</td><td><b>析取图</b>：给定机器顺序，返回 C<sub>max</sub>，有环返回 None</td><td>11.3</td></tr>
+                  <tr><td>ex4</td><td><b>两种模型</b>：大 M 的 MIP、LP 松弛值、CP-SAT，比较最优值</td><td>11.4</td></tr>
+                  <tr><td>ex5</td><td>审 5 个 AI 写的流水车间函数：不看源码，只靠运行结果归类问题</td><td>11.1</td></tr>
+                  <tr><td>挑战</td><td>派工规则：最早能开始的工序优先，并列取时间短的，再取下标小的</td><td>11.5</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <pre>pip install -r requirements.txt
+pytest -q                     # 全部练习
+pytest tests/test_ex3.py -q   # 单个练习
+
+# 确认判分本身没问题：参考答案应当全部通过
+LAB_TARGET=solutions pytest -q</pre>
+              <p style="font-size:13.5px;color:var(--muted);margin:10px 0 0">练习 1 要求先在 <code>PREDICTION</code> 里写下预测再运行；跑完测试后，终端最后会把你的预测和实际结果并排列出来。</p>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="sub">下一章</h3>
+        <div class="next">
+          <div class="eyebrow">CHAPTER 12</div>
+          <h4>资源与时间窗约束</h4>
+          <p style="margin:0">前面的工序只需要一台机器。真实的调度里，一道工序常常同时需要几种资源（提升机加一个操作员，一辆穿梭车加一条巷道），而且有开始不早于、完成不晚于的时间窗。下一章把这些写成资源受限的项目调度问题（RCPSP），看时间窗、优先关系和多资源怎样进入 CP-SAT 模型。</p>
+        </div>
+      </section>
+
+      <!-- ============================================================ 11.7 -->
+      <section class="chap" id="s7">
+        <h2 class="sec"><span class="no">11.7</span>自测</h2>
+        <p>8 道题，覆盖本章的全部要点。每题选完立即给出解析。</p>
+        <div class="quiz" id="quiz"></div>
+      </section>
+
+      <footer class="foot">
+        数据说明：本章的全部数字由页面内置的流水车间递推、Johnson 规则、NEH、析取图最长路与枚举实时计算，并与暴力枚举、Python 实现逐项对拍（环境：<span id="envline2"></span>）。11.4 的对比表来自 Lab 参考答案在随机实例上的实测，用时依赖机器。
+      </footer>
+    </main>
+  </div>
+</div>
+
+<div class="tip" id="tip" hidden></div>
