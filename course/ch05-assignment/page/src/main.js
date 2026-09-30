@@ -50,6 +50,7 @@
       w: "阈值加匹配是精确的多项式算法，没有 gap。扫描 τ，每个 τ 再用一次匈牙利求最小总时间，就得到（最晚到达，总时间）的整条帕累托阶梯。" }
   ];
   var qState = {};
+  if (window.PRINT_MODE) QUIZ.forEach(function (it, k) { qState[k] = it.a; });   // 打印/PDF：显示参考答案
   function renderQuiz() {
     var box = clear($("quiz")), score = 0, answered = 0;
     QUIZ.forEach(function (it, k) {

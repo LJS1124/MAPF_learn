@@ -53,6 +53,7 @@ function hideTip() { tip.hidden = true; }
 
 // ------------------------------------------------------------ 先预测与遮罩
 function gate(host, prediction) {
+  if (window.PRINT_MODE) return function () {};   // 打印/PDF：不遮挡
   host.classList.add("gated");
   var cover = el("div", { cls: "gate-cover" }, [el("div", {}, [
     el("p", { text: "先完成上面的预测，再看结果" }),
@@ -79,6 +80,7 @@ function prediction(box, cfg) {
       opened.forEach(function (fn) { fn(); });
     }
   };
+  if (window.PRINT_MODE) setTimeout(function () { api.reveal(cfg.ans); }, 0);   // 打印/PDF：直接显示答案与解析
   return api;
 }
 

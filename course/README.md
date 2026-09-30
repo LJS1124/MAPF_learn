@@ -6,7 +6,7 @@
 - **Lab 代码包**：练习 + 参考答案 + pytest 自动判分，判分数据来自暴力枚举，不依赖你的代码，也不依赖求解器；
 - **源码**：页面的 HTML/JS 源、构建脚本与对拍测试，都在本目录里。
 
-完整大纲见 [outline.md](outline.md)。
+完整大纲见 [outline.md](outline.md)。**离线阅读版**（单文件网页和 PDF，不需要网络）见 [offline/](offline/)。
 
 ## 进度
 

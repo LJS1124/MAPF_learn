@@ -56,6 +56,7 @@
     it.a = (it.a - r + 4) % 4;
   });
   var qState = {};
+  if (window.PRINT_MODE) QUIZ.forEach(function (it, k) { qState[k] = it.a; });   // 打印/PDF：显示参考答案
   function renderQuiz() {
     var box = clear($("quiz")), score = 0, answered = 0;
     QUIZ.forEach(function (it, k) {
