@@ -1,0 +1,146 @@
+<div class="page">
+  <div class="topbar">
+    <span><b>物流调度与运筹优化</b> · 系统课程</span>
+    <span>第三部分 调度理论 · 第 9 章</span>
+  </div>
+
+  <div class="layout">
+    <nav class="toc" aria-label="本章目录">
+      <div class="toc-title">本章目录</div>
+      <ol>
+        <li><a href="#s1"><span>9.1</span><span>什么是调度问题</span></a></li>
+        <li><a href="#s2"><span>9.2</span><span>三段式记号</span></a></li>
+        <li><a href="#s3"><span>9.3</span><span>目标函数</span></a></li>
+        <li><a href="#s4"><span>9.4</span><span>机器环境</span></a></li>
+        <li><a href="#s5"><span>9.5</span><span>复杂度地图</span></a></li>
+        <li><a href="#s6"><span>9.6</span><span>在项目里的位置</span></a></li>
+        <li><a href="#s7"><span>9.7</span><span>小结与 Lab</span></a></li>
+        <li><a href="#s8"><span>9.8</span><span>自测</span></a></li>
+      </ol>
+      <div class="toc-note">页面里的数字全部实时计算：单机各目标的评估与枚举最优、并行机的列表调度与枚举最优、复杂度地图的分类（已知结果加“特例与推广”推理）都由页面内置代码完成，并与暴力枚举对拍。</div>
+    </nav>
+
+    <main>
+      <!-- ============================================================ HERO -->
+      <section class="hero">
+        <div class="eyebrow">CHAPTER 09 · 调度理论</div>
+        <h1><span class="no">9</span>调度问题的语言：一句话说清是什么问题，有多难</h1>
+        <p class="sub">前两部分回答“谁做、怎么走”。这一部分回答“什么时候做”：提升机、站点、堆垛设备都是要排队的机器。调度领域有一套简洁的记号，一个三段式的标签就能说清机器怎么配置、有什么约束、要优化什么。学会读写这个标签，就能在文献里迅速找到你的问题，知道它是容易的还是难的。</p>
+        <div class="hero-grid">
+          <div class="card">
+            <h3>学完本章，你能</h3>
+            <ol class="goals">
+              <li>用作业、机器、调度、甘特图描述一个排班问题，区分“分配、排序、定时”三类决策。</li>
+              <li>读写 α | β | γ 三段式记号，把提升机、多车、站点串联这些场景翻译成标签。</li>
+              <li>计算 C<sub>max</sub>、ΣC<sub>j</sub>、Σw<sub>j</sub>C<sub>j</sub>、L<sub>max</sub>、ΣT<sub>j</sub>、ΣU<sub>j</sub>，并解释为什么没有一种排法能让它们同时最好。</li>
+              <li>用“特例与推广”的关系推理一个问题的复杂度，读复杂度地图，知道该去用规则、动态规划、还是启发式与求解器。</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>本章信息</h3>
+            <dl class="meta">
+              <div><dt>用时</dt><dd>阅读与交互 70–100 分钟，Lab 2.5 小时左右</dd></div>
+              <div><dt>前置</dt><dd>第 1 章（建模）、第 5、6 章（指派、网络流）、第 8 章（NP 难的直观）。会读 Python 代码。</dd></div>
+              <div><dt>对拍</dt><dd><span class="mono" id="envline"></span>；本章的算法由页面内置代码实现，不依赖求解器。</dd></div>
+              <div><dt>配套</dt><dd>Lab 代码包：5 个练习 + 1 个挑战，含目标函数评估、并行机列表调度、记号解析与复杂度推理，pytest 自动判分</dd></div>
+            </dl>
+          </div>
+        </div>
+        <div class="roadmap" aria-label="课程路线">
+          <div><b>PART 1</b>数学规划基础</div>
+          <div><b>PART 2</b>组合优化</div>
+          <div class="now"><b>PART 3</b>调度理论</div>
+          <div><b>PART 4</b>路径与波次</div>
+          <div><b>PART 5</b>大规模方法</div>
+          <div><b>PART 6</b>启发式</div>
+          <div><b>PART 7</b>多智能体时空规划</div>
+          <div><b>PART 8</b>动态与不确定</div>
+        </div>
+        <div class="roadmap-cap">第三部分 调度理论：<b>调度问题的语言（本章）</b>→ 单机与并行机 → 流水车间与作业车间 → 资源与时间窗约束。</div>
+      </section>
+
+      <!-- ============================================================ 9.1 -->
+      <section class="chap" id="s1">
+        <h2 class="sec"><span class="no">9.1</span>什么是调度问题</h2>
+        <p class="lead">6 个托盘要过同一台提升机。每个托盘占用提升机若干秒，有的着急、有的不急，有的必须赶上某个发运截止时间。谁先上、谁后上？这就是一个调度问题。</p>
+        <p>调度问题的基本语言只有三样：</p>
+        <div class="theorems">
+          <div class="thm"><div class="tn">作业（job）</div><p>要完成的活，编号 <span class="m">j</span>。每个作业有：加工时间 <span class="m">p</span><sub class="m">j</sub>（占用机器多久）；释放时间 <span class="m">r</span><sub class="m">j</sub>（最早什么时候能开始）；交货期 <span class="m">d</span><sub class="m">j</sub>（最好什么时候完成）；权重 <span class="m">w</span><sub class="m">j</sub>（有多重要）。</p></div>
+          <div class="thm"><div class="tn">机器（machine）</div><p>做活的资源。提升机、堆垛机、装卸月台、四向车，在调度里都可以当作机器：同一时刻只能做一个作业。</p></div>
+          <div class="thm"><div class="tn">调度（schedule）</div><p>给每个作业指定在哪台机器上、什么时候开始。画出来是<b>甘特图</b>：横轴是时间，每台机器一行，每个作业是一个方块。作业 <span class="m">j</span> 的完工时间记作 <span class="m">C</span><sub class="m">j</sub>。</p></div>
+        </div>
+        <p>做一个调度，其实是做三类决策：<b>分配</b>（每个作业去哪台机器）、<b>排序</b>（同一台机器上先做谁）、<b>定时</b>（每个作业几点开始）。单台机器、没有释放时间的时候，只剩排序：6 个作业有 6! = 720 种顺序。</p>
+        <p>本章反复用到的例子：一台提升机，6 个托盘。</p>
+        <div class="tbl-wrap"><table class="gloss" style="max-width:34rem">
+          <thead><tr><th>作业</th><th>J1</th><th>J2</th><th>J3</th><th>J4</th><th>J5</th><th>J6</th></tr></thead>
+          <tbody>
+            <tr><td>加工时间 <span class="m">p</span></td><td>7</td><td>3</td><td>5</td><td>2</td><td>8</td><td>5</td></tr>
+            <tr><td>权重 <span class="m">w</span></td><td>2</td><td>2</td><td>4</td><td>4</td><td>4</td><td>2</td></tr>
+            <tr><td>交货期 <span class="m">d</span></td><td>13</td><td>23</td><td>17</td><td>5</td><td>9</td><td>21</td></tr>
+          </tbody>
+        </table></div>
+        <p>总加工时间 30，所以不管怎么排，最后一个作业都在时刻 30 结束。但每个作业各在什么时候完成，取决于顺序，好坏也就取决于你在乎什么，这就是下一节要回答的问题。</p>
+      </section>
+
+      <!-- ============================================================ 9.2 -->
+      <section class="chap" id="s2">
+        <h2 class="sec"><span class="no">9.2</span>三段式记号</h2>
+        <p class="lead">Graham 等人（1979）给调度问题定了一套记号：<b>α | β | γ</b>。三段分别说机器、约束、目标。一句话能说清楚一个问题，也是查文献的关键词。</p>
+        <div class="tbl-wrap"><table class="gloss">
+          <thead><tr><th>段</th><th>含义</th><th>常见取值</th></tr></thead>
+          <tbody>
+            <tr><td>α 机器环境</td><td>有几台机器，怎么配置</td><td><b>1</b> 单机；<b>P<span class="m">m</span></b> 相同并行机；<b>Q<span class="m">m</span></b> 速度不同的并行机；<b>R<span class="m">m</span></b> 不相关并行机；<b>F<span class="m">m</span></b> 流水车间；<b>J<span class="m">m</span></b> 作业车间；<b>O<span class="m">m</span></b> 开放车间</td></tr>
+            <tr><td>β 约束与特征</td><td>作业的附加条件，可以为空或多个</td><td><span class="m">r</span><sub class="m">j</sub> 有释放时间；<b>prec</b> 先后约束；<b>prmp</b> 允许中断；<span class="m">d</span><sub class="m">j</sub> 交货期是硬性的；<span class="m">s</span><sub class="m">jk</sub> 准备时间（与顺序有关）</td></tr>
+            <tr><td>γ 目标</td><td>要最小化什么</td><td><span class="m">C</span><sub class="m">max</sub>、Σ<span class="m">C</span><sub class="m">j</sub>、Σ<span class="m">w</span><sub class="m">j</sub><span class="m">C</span><sub class="m">j</sub>、<span class="m">L</span><sub class="m">max</sub>、Σ<span class="m">T</span><sub class="m">j</sub>、Σ<span class="m">U</span><sub class="m">j</sub>……</td></tr>
+          </tbody>
+        </table></div>
+        <p>几个例子，读一遍，感受一下：</p>
+        <ul class="steps" style="list-style:none;padding-left:0">
+          <li style="padding-left:0"><b>1 | | Σ<span class="m">C</span><sub class="m">j</sub></b>：一台机器，没有额外约束，让所有作业的完工时间之和最小（平均等待最短）。</li>
+          <li style="padding-left:0"><b>1 | <span class="m">r</span><sub class="m">j</sub> | <span class="m">L</span><sub class="m">max</sub></b>：一台机器，作业陆续到达，让最晚的那个比交货期迟得最少。</li>
+          <li style="padding-left:0"><b>P2 | | <span class="m">C</span><sub class="m">max</sub></b>：两台相同的机器，让最后一个作业尽快完成（均衡负荷）。</li>
+          <li style="padding-left:0"><b>R | | Σ<span class="m">C</span><sub class="m">j</sub></b>：不相关并行机，每个作业在不同机器上时间不同，让完工时间之和最小。</li>
+          <li style="padding-left:0"><b>F2 | | <span class="m">C</span><sub class="m">max</sub></b>：两台机器串联的流水车间，每个作业先过第一台再过第二台。</li>
+        </ul>
+        <p>后面 9.5 节的图 9-3 让你自己拼一个标签，它会告诉你这个问题在文献里是容易还是困难。</p>
+      </section>
+
+      <!-- ============================================================ 9.3 -->
+      <section class="chap" id="s3">
+        <h2 class="sec"><span class="no">9.3</span>目标函数：你在乎什么</h2>
+        <p class="lead">“排得好”没有唯一的意思。同一批作业，追求的东西不同，最优的顺序也不同。常见的目标都由完工时间 <span class="m">C</span><sub class="m">j</sub> 和交货期 <span class="m">d</span><sub class="m">j</sub> 算出来：</p>
+        <div class="tbl-wrap"><table class="gloss">
+          <thead><tr><th>目标</th><th>公式</th><th>在乎什么</th></tr></thead>
+          <tbody>
+            <tr><td>最大完工时间（makespan）</td><td><span class="m">C</span><sub class="m">max</sub> = max <span class="m">C</span><sub class="m">j</sub></td><td>所有活多久干完，设备利用率</td></tr>
+            <tr><td>完工时间之和</td><td>Σ<span class="m">C</span><sub class="m">j</sub>　或　Σ<span class="m">w</span><sub class="m">j</sub><span class="m">C</span><sub class="m">j</sub></td><td>平均等待，在制品库存；权重表示重要程度</td></tr>
+            <tr><td>最大延迟（lateness）</td><td><span class="m">L</span><sub class="m">max</sub> = max(<span class="m">C</span><sub class="m">j</sub> − <span class="m">d</span><sub class="m">j</sub>)</td><td>最坏的那一单迟了多少；可以是负数（提前）</td></tr>
+            <tr><td>延误时间之和（tardiness）</td><td>Σ<span class="m">T</span><sub class="m">j</sub>，<span class="m">T</span><sub class="m">j</sub> = max(0, <span class="m">C</span><sub class="m">j</sub> − <span class="m">d</span><sub class="m">j</sub>)</td><td>迟到总共多久，提前不奖励</td></tr>
+            <tr><td>延误作业个数</td><td>Σ<span class="m">U</span><sub class="m">j</sub>，<span class="m">U</span><sub class="m">j</sub> = 1 若 <span class="m">C</span><sub class="m">j</sub> &gt; <span class="m">d</span><sub class="m">j</sub></td><td>有几单没赶上截止时间</td></tr>
+          </tbody>
+        </table></div>
+        <p>这些目标都是<b>正则</b>的：完工时间变大，目标不会变好。所以没有必要故意让机器空转，最优调度里作业总是尽早开始。</p>
+
+        <div class="predict" id="p1"></div>
+
+        <figure class="fig wide gatehost" id="fig1">
+          <div class="fig-body">
+            <div class="fig-toolbar">
+              <span class="label">套用规则</span>
+              <div class="seg" id="jobRules" role="group" aria-label="排序规则"></div>
+            </div>
+            <div><span class="label" style="font-size:12.5px;color:var(--muted)">当前顺序（点两侧的箭头调整）：</span><div id="jobSeq"></div></div>
+            <svg class="gantt" id="jobGantt" role="img" aria-label="一台提升机上的甘特图"></svg>
+            <div class="twocol">
+              <div class="tbl-wrap"><table class="lbt" id="jobMetrics" aria-label="各目标的当前值与最优值"></table></div>
+              <div><div class="saybox" id="jobSay"></div></div>
+            </div>
+          </div>
+          <figcaption><b>图 9-1</b>同一台提升机上的 6 个作业。方块是作业（宽度是加工时间），三角标是交货期，红框表示这个作业延误。可以套用规则，也可以自己调整顺序。表里“最优”一列是枚举全部 720 种顺序得到的，绿色的行表示当前顺序在这个目标上已经最优。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>SPT（最短加工时间优先）：</b>J4、J2、J3、J6、J1、J5。它让 ΣC<sub>j</sub> 达到 84，这是最优（比先来先做的 104 少了近两成），但 L<sub>max</sub> 是 21，有 2 个作业延误。<b>WSPT（加权最短优先）</b>让 Σw<sub>j</sub>C<sub>j</sub> 最优（234），此时重要的作业排在前面。<b>EDD（最早交货期优先）</b>让 L<sub>max</sub> 最小（7），但 ΣC<sub>j</sub> 涨到 108，延误作业的个数是 5。<b>Moore–Hodgson</b> 只有一个作业延误（ΣU<sub>j</sub> = 1，最优），代价是 L<sub>max</sub> 高达 21：它干脆把那个赶不上的作业放到最后。</p>
+        <p>所以<b>目标函数决定了你该用什么规则</b>。这些规则（SPT、WSPT、EDD、Moore）都是精确的多项式算法，下一章会逐个证明它们为什么对。</p>
+        <p>把 ΣC<sub>j</sub> 和 L<sub>max</sub> 放在一起看：它们冲突。所有顺序里，两个目标的<b>帕累托前沿</b>有 8 个点，从 (ΣC = 108, L<sub>max</sub> = 7) 到 (84, 21)，想让最坏的一单迟得少，就得让平均等待变长。到底选哪一个点，是业务的决定，不是算法的决定。</p>
+      </section>

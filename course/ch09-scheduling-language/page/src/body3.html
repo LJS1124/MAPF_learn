@@ -1,0 +1,96 @@
+
+      <!-- ============================================================ 9.7 -->
+      <section class="chap" id="s7">
+        <h2 class="sec"><span class="no">9.7</span>小结与 Lab</h2>
+        <ol class="takeaways">
+          <li>调度问题由作业（<span class="m">p</span>、<span class="m">r</span>、<span class="m">d</span>、<span class="m">w</span>）、机器和调度（分配、排序、定时）组成，用甘特图表示。提升机、堆垛机、月台、四向车在调度里都是“机器”。</li>
+          <li>三段式记号 α | β | γ 分别是机器环境、约束、目标：1、P、Q、R 是并行机，F、J、O 是车间；β 里常见 <span class="m">r</span><sub class="m">j</sub>、prec、prmp、<span class="m">s</span><sub class="m">jk</sub>；γ 是要最小化的目标。一个标签能说清一个问题，也是查文献的关键词。</li>
+          <li>目标不同，最优的排法不同：ΣC<sub>j</sub> 偏爱 SPT，Σw<sub>j</sub>C<sub>j</sub> 偏爱 WSPT，L<sub>max</sub> 偏爱 EDD，ΣU<sub>j</sub> 偏爱 Moore–Hodgson。没有一种排法能让所有目标同时最好；ΣC<sub>j</sub> 与 L<sub>max</sub> 的帕累托前沿有 8 个点。选目标是业务的决定。</li>
+          <li>C<sub>max</sub> 在没有释放时间的单机上与顺序无关（总加工时间）；并行机上它是均衡负荷问题，列表调度（LPT 等）是快速的启发式，但不保证最优。</li>
+          <li>复杂度靠“特例与推广”推理：问题至少和它的特例一样难，至多和它的推广一样容易；可中断（prmp）不在这个序里。单机上大部分目标有简单的规则，机器一多、加上释放时间，许多问题就变成 NP 难；同一个机器环境里目标不同，难度可以相差悬殊（R || ΣC<sub>j</sub> 是指派，R || C<sub>max</sub> 强 NP 难）。</li>
+          <li>先写标签、查地图，再决定用规则、动态规划、MIP 还是启发式。经典记号覆盖不了的约束（时间窗、共享资源），也要先找“最接近的经典问题”。</li>
+        </ol>
+
+        <h3 class="sub">术语表</h3>
+        <div class="tbl-wrap">
+          <table class="gloss">
+            <thead><tr><th>中文</th><th>English</th><th>在本章的含义</th></tr></thead>
+            <tbody>
+              <tr><td>作业、机器</td><td>job, machine</td><td>要做的活；同一时刻只能做一个作业的资源</td></tr>
+              <tr><td>加工时间、释放时间、交货期、权重</td><td>p<sub>j</sub>, r<sub>j</sub>, d<sub>j</sub>, w<sub>j</sub></td><td>占用机器多久；最早开始；希望完成的时刻；重要程度</td></tr>
+              <tr><td>完工时间</td><td>completion time C<sub>j</sub></td><td>作业 j 做完的时刻</td></tr>
+              <tr><td>甘特图</td><td>Gantt chart</td><td>横轴是时间，每台机器一行的排班图</td></tr>
+              <tr><td>三段式记号</td><td>α | β | γ notation</td><td>机器环境 | 约束 | 目标</td></tr>
+              <tr><td>最大完工时间</td><td>makespan C<sub>max</sub></td><td>最后一个作业的完工时间</td></tr>
+              <tr><td>延迟、延误</td><td>lateness L<sub>j</sub>, tardiness T<sub>j</sub></td><td>C<sub>j</sub> − d<sub>j</sub>（可为负）；max(0, C<sub>j</sub> − d<sub>j</sub>)</td></tr>
+              <tr><td>正则目标</td><td>regular objective</td><td>完工时间变大目标不会变好</td></tr>
+              <tr><td>并行机 P/Q/R</td><td>identical / uniform / unrelated machines</td><td>相同；速度不同；加工时间是任意的表 p<sub>ij</sub></td></tr>
+              <tr><td>流水车间、作业车间、开放车间</td><td>flow shop, job shop, open shop</td><td>路线相同；路线各异；路线不限</td></tr>
+              <tr><td>列表调度</td><td>list scheduling</td><td>按给定顺序，把作业放到完工最早的机器</td></tr>
+              <tr><td>弱/强 NP 难</td><td>NP-hard in the ordinary / strong sense</td><td>有 / 没有伪多项式算法（除非 P = NP）</td></tr>
+              <tr><td>帕累托前沿</td><td>Pareto front</td><td>没有被别的排法在两个目标上同时压过的排法</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="sub">对照教材</h3>
+        <ul class="refs">
+          <li>Pinedo，<em>Scheduling: Theory, Algorithms, and Systems</em>（第 5 版，Springer 2016）：第 1–2 章调度问题的分类与记号，附录的复杂度表。本课程调度部分的主要参考。</li>
+          <li>Graham、Lawler、Lenstra、Rinnooy Kan，“Optimization and approximation in deterministic sequencing and scheduling: a survey”（Annals of Discrete Mathematics，1979）：三段式记号的出处。</li>
+          <li>Brucker，<em>Scheduling Algorithms</em>（第 5 版，Springer 2007）：各类问题的算法与复杂度分类，含完整的复杂度图。</li>
+          <li>Lawler、Lenstra、Rinnooy Kan、Shmoys，“Sequencing and scheduling: algorithms and complexity”（Handbooks in OR &amp; MS，1993）；Garey &amp; Johnson，<em>Computers and Intractability</em>（1979）：NP 难的基础。</li>
+          <li>网上的“Scheduling Zoo”（schedulingzoo.lip6.fr）把三段式记号做成了可查询的复杂度表，可以随时对照本章的图 9-3。</li>
+        </ul>
+
+        <h3 class="sub">本章 Lab</h3>
+        <div class="lab">
+          <div class="lab-grid">
+            <div>
+              <p style="margin-top:0">代码包 <code>ch09-scheduling-language-lab.zip</code> 随本章一起发放。依赖是 numpy、pytest；判分用暴力枚举，不依赖你的代码。</p>
+              <table class="labt">
+                <thead><tr><th>练习</th><th>内容</th><th>对应</th></tr></thead>
+                <tbody>
+                  <tr><td>ex1</td><td><b>目标函数</b>：评估一个顺序的 C<sub>max</sub>、ΣC<sub>j</sub>、Σw<sub>j</sub>C<sub>j</sub>、L<sub>max</sub>、ΣT<sub>j</sub>、ΣU<sub>j</sub>（含释放时间）；枚举每个目标的最优；先填 4 个预测</td><td>9.1、9.3</td></tr>
+                  <tr><td>ex2</td><td><b>并行机</b>：列表调度（P、Q、R 通用的 p<sub>ij</sub> 表）、枚举最优 C<sub>max</sub>、下界</td><td>9.4</td></tr>
+                  <tr><td>ex3</td><td><b>记号</b>：解析 α | β | γ，判断“是不是另一个问题的特例”</td><td>9.2、9.5</td></tr>
+                  <tr><td>ex4</td><td><b>复杂度推理</b>：由已知结果表沿特例与推广推出分类</td><td>9.5</td></tr>
+                  <tr><td>ex5</td><td>审 5 个 AI 写的目标计算函数：不看源码，只靠运行结果归类问题</td><td>9.3</td></tr>
+                  <tr><td>挑战</td><td>ΣC<sub>j</sub> 与 L<sub>max</sub> 的帕累托前沿</td><td>9.3</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <pre>pip install -r requirements.txt
+pytest -q                     # 全部练习
+pytest tests/test_ex3.py -q   # 单个练习
+
+# 确认判分本身没问题：参考答案应当全部通过
+LAB_TARGET=solutions pytest -q</pre>
+              <p style="font-size:13.5px;color:var(--muted);margin:10px 0 0">练习 1 要求先在 <code>PREDICTION</code> 里写下预测再运行；跑完测试后，终端最后会把你的预测和实际结果并排列出来。</p>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="sub">下一章</h3>
+        <div class="next">
+          <div class="eyebrow">CHAPTER 10</div>
+          <h4>单机与并行机</h4>
+          <p style="margin:0">本章反复出现的 SPT、WSPT、EDD、Moore–Hodgson，都是“一条规则就得到最优”的例子。下一章逐个证明它们为什么对：用交换论证，比较相邻的两个作业，一次交换不会变坏。再看并行机上的列表调度，它的最坏情况有多差，近似比是多少。</p>
+        </div>
+      </section>
+
+      <!-- ============================================================ 9.8 -->
+      <section class="chap" id="s8">
+        <h2 class="sec"><span class="no">9.8</span>自测</h2>
+        <p>8 道题，覆盖本章的全部要点。每题选完立即给出解析。</p>
+        <div class="quiz" id="quiz"></div>
+      </section>
+
+      <footer class="foot">
+        数据说明：本章的全部数字由页面内置的目标函数评估、720 种顺序的枚举、并行机列表调度与枚举、复杂度地图的推理实时计算，并与 Lab 的判分数据同源；复杂度结果表来自教材中的经典结果（Pinedo、Brucker 等）（环境：<span id="envline2"></span>）。
+      </footer>
+    </main>
+  </div>
+</div>
+
+<div class="tip" id="tip" hidden></div>

@@ -25,6 +25,7 @@ CHAPTERS = {
     "ch06-network-flow": ("ch06-network-flow", ["#spAll", "#mfAll", "#nmSeg button:nth-child(3)"]),
     "ch07-capacitated": ("ch07-capacitated", ["#btAll", "#cutAll"]),
     "ch08-tsp-vrp": ("ch08-tsp-vrp", ["#secAll"]),
+    "ch09-scheduling-language": ("ch09-scheduling-language", []),
 }
 
 PRINT_CSS = """

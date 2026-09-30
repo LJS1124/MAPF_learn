@@ -1,0 +1,92 @@
+
+      <!-- ============================================================ 9.4 -->
+      <section class="chap" id="s4">
+        <h2 class="sec"><span class="no">9.4</span>机器环境：有几台，怎么配</h2>
+        <p class="lead">机器不止一台的时候，先要分清机器之间是什么关系。</p>
+        <div class="theorems">
+          <div class="thm"><div class="tn">并行机：一个作业只在一台机器上做一次</div><p><b>P</b>（相同）：加工时间与机器无关。<b>Q</b>（速度不同）：机器 <span class="m">i</span> 的速度是 <span class="m">s</span><sub class="m">i</sub>，时间是 <span class="m">p</span><sub class="m">j</sub> / <span class="m">s</span><sub class="m">i</sub>。<b>R</b>（不相关）：<span class="m">p</span><sub class="m">ij</sub> 是任意的一张表，机器各有所长，比如不同位置的四向车做同一个任务的行驶时间。</p></div>
+          <div class="thm"><div class="tn">车间：一个作业要依次经过几台机器</div><p><b>F</b> 流水车间：所有作业经过机器的顺序相同（入库 → 提升机 → 出库）。<b>J</b> 作业车间：每个作业有自己的路线。<b>O</b> 开放车间：作业要在每台机器上做，顺序不限。第 11 章展开。</p></div>
+        </div>
+        <p>P、Q、R 越往后越一般：P 是 Q 的特例（所有速度为 1），Q 是 R 的特例（<span class="m">p</span><sub class="m">ij</sub> = <span class="m">p</span><sub class="m">j</sub> / <span class="m">s</span><sub class="m">i</sub>）。这个“特例关系”后面用来推理复杂度。</p>
+
+        <div class="predict" id="p2"></div>
+
+        <figure class="fig wide gatehost" id="fig2">
+          <div class="fig-body">
+            <div class="fig-toolbar">
+              <span class="label">机器环境</span>
+              <div class="seg" id="envSeg" role="group" aria-label="机器环境"></div>
+              <span class="label">派单顺序</span>
+              <div class="seg" id="ordSeg" role="group" aria-label="派单顺序"></div>
+            </div>
+            <div class="statrow" id="envStats"></div>
+            <svg class="gantt" id="envGantt" role="img" aria-label="并行机的甘特图"></svg>
+            <div class="saybox" id="envSay"></div>
+          </div>
+          <figcaption><b>图 9-2</b>同一批 6 个作业（加工时间 7、3、5、2、8、5）在不同机器环境下，用“列表调度”排：按给定顺序，逐个把作业放到完工最早的机器上。橙色虚线是 C<sub>max</sub>。最优值由枚举每个作业去哪台机器得到。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>单机：</b>C<sub>max</sub> = 30，总加工时间，顺序无关。<b>两台相同的机器：</b>总量 30，下界 15。按编号列表调度得到 16，最优是 15；改成“最长的先放”（LPT）就得到 15。列表调度是一种很快的启发式，但它没有保证一定最优，即使是最简单的 P2 || C<sub>max</sub>，它也是一个 NP 难的问题（由划分问题推出）。</p>
+        <p><b>两台不相关的机器：</b>按编号列表调度恰好是最优（11）；换成“最长的先放”，得到 14，比最优多 3。<b>顺序策略对不同环境的效果不同</b>，没有哪一条规则永远最好，所以要知道问题是哪一类，才能知道该用哪种方法。</p>
+      </section>
+
+      <!-- ============================================================ 9.5 -->
+      <section class="chap" id="s5">
+        <h2 class="sec"><span class="no">9.5</span>复杂度地图：哪些容易，哪些难</h2>
+        <p class="lead">调度领域积累了几百个问题的复杂度结果。你不需要背，只需要理解推理规则：一个问题<b>至少和它的特例一样难</b>，<b>至多和它的推广一样容易</b>。</p>
+        <ol class="steps">
+          <li><b>特例与推广：</b>1 是 P 的特例，P 是 Q 的特例，Q 是 R 的特例；没有释放时间是有释放时间的特例；C<sub>max</sub> 是 L<sub>max</sub> 的特例（令 <span class="m">d</span><sub class="m">j</sub> = 0）；ΣC<sub>j</sub> 是 Σw<sub>j</sub>C<sub>j</sub> 的特例（令所有 <span class="m">w</span><sub class="m">j</sub> = 1）。</li>
+          <li><b>难度沿推广传播：</b>如果 A 是 NP 难的，B 是 A 的推广，B 也是 NP 难的。因为解 B 的算法可以拿来解 A。</li>
+          <li><b>容易沿特例传播：</b>如果 B 有多项式算法，A 是 B 的特例，A 也有。</li>
+          <li><b>但可中断（prmp）不在这个序里：</b>允许中断可能让问题变容易，也可能没有影响，不能靠它推理。</li>
+        </ol>
+        <p>“NP 难”也有强弱：<b>弱 NP 难</b>的问题有伪多项式时间的算法（数值不大时可以用，比如动态规划），<b>强 NP 难</b>的问题连这样的算法也没有（除非 P = NP）。图 9-3 里橙色是弱 NP 难，红色是强 NP 难或没有区分。</p>
+
+        <div class="predict" id="p3"></div>
+
+        <figure class="fig wide gatehost" id="fig3">
+          <div class="fig-body">
+            <div class="fig-toolbar"><span class="label">α 机器</span><div class="seg" id="notAlpha" role="group" aria-label="机器环境"></div></div>
+            <div class="fig-toolbar"><span class="label">β 约束</span><div class="chips" id="notBeta" style="display:flex;gap:6px;flex-wrap:wrap"></div><span class="label" style="margin-left:12px">γ 目标</span><div class="seg" id="notGamma" role="group" aria-label="目标"></div></div>
+            <div class="twocol">
+              <div>
+                <div class="notation"><span class="lbl">你拼出的问题</span><span id="notTxt"></span></div>
+                <div class="flags" id="notBadge"></div>
+                <div class="saybox" id="notWhy" style="min-height:2em"></div>
+              </div>
+              <div>
+                <div class="mtx-wrap"><table class="cxmap" id="cxMap" aria-label="复杂度地图"></table></div>
+                <div class="mtx-note" id="cxNote"></div>
+              </div>
+            </div>
+            <div class="lgd"><span><i class="good"></i>多项式可解 P</span><span><i class="hot"></i>弱 NP 难（伪多项式）</span><span><i class="bad"></i>NP 难（强）</span><span><i class="gray"></i>表里推不出</span></div>
+          </div>
+          <figcaption><b>图 9-3</b>三段式记号与复杂度地图。上面选 α（机器）、β（约束）、γ（目标），左边给出这个问题的分类和理由；右边的地图是：在当前选的 β 下，每种（机器 × 目标）的组合是容易还是难，点格子可以切换。分类来自一张经典结果表（30 多个条目），加上上面的“特例与推广”推理；鼠标停在格子上能看到理由。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>先看 β 为空的地图：</b>单机（第一行）上，目标几乎全是多项式可解的：C<sub>max</sub>、ΣC<sub>j</sub>、Σw<sub>j</sub>C<sub>j</sub>、L<sub>max</sub>、ΣU<sub>j</sub> 都有简单的规则。往下走，机器变多，绿色越来越少：<b>P2 的 C<sub>max</sub> 已经是 NP 难</b>（划分问题）。同一个机器环境里，目标不同，难度也可以完全不同：R || ΣC<sub>j</sub> 是多项式的（它就是第 5 章的指派问题），R || C<sub>max</sub> 却是强 NP 难。</p>
+        <p><b>再加 β：</b>点亮 <span class="m">r</span><sub class="m">j</sub>（释放时间）。单机的 L<sub>max</sub>、ΣC<sub>j</sub> 立刻变成红色：没有释放时间时 EDD、SPT 一步到位，一旦作业陆续到达，问题就变成强 NP 难。这个变化对系统很重要：<b>任务动态到达，会让原本简单的排序问题变难</b>，也是第 30 章在线调度的出发点。</p>
+        <div class="callout key"><b class="t">复杂度地图的用法</b>遇到一个调度问题，先写出它的三段式标签，查地图。绿色：找对应的规则或算法，不要建 MIP。橙色：数值不大时用动态规划。红色：用 MIP 或约束规划（第 11 章）求解小规模，用启发式（第 21 章）求解大规模，并用下界评价解的质量。</div>
+      </section>
+
+      <!-- ============================================================ 9.6 -->
+      <section class="chap" id="s6">
+        <h2 class="sec"><span class="no">9.6</span>在项目里的位置</h2>
+        <p class="lead">把你场景里的设备翻译成三段式标签，是这一部分每一章开始前要做的事。</p>
+        <div class="tbl-wrap"><table class="gloss">
+          <thead><tr><th>场景</th><th>记号</th><th>难度与做法</th></tr></thead>
+          <tbody>
+            <tr><td>一台提升机，托盘排队，尽量减少平均等待</td><td>1 | | ΣC<sub>j</sub>（或带权重 Σw<sub>j</sub>C<sub>j</sub>）</td><td>多项式：SPT / WSPT（第 10 章）</td></tr>
+            <tr><td>一台提升机，托盘要赶发运截止时间</td><td>1 | | L<sub>max</sub>；1 | | ΣU<sub>j</sub></td><td>多项式：EDD；Moore–Hodgson（第 10 章）</td></tr>
+            <tr><td>托盘陆续到达提升机（不知道后面会来什么）</td><td>1 | <span class="m">r</span><sub class="m">j</sub> | L<sub>max</sub></td><td>强 NP 难；在线时更难（第 30 章）</td></tr>
+            <tr><td>两台提升机分担同一批托盘</td><td>P2 | | C<sub>max</sub></td><td>NP 难（弱）；LPT 有 7/6 的近似（第 10 章）</td></tr>
+            <tr><td>多辆四向车，各自到每个任务的时间不同</td><td>R | | ΣC<sub>j</sub></td><td>多项式：指派问题（第 5 章）</td></tr>
+            <tr><td>入库 → 提升机 → 出库，三个工位串联</td><td>F3 | | C<sub>max</sub></td><td>强 NP 难；MIP 或启发式（第 11 章）</td></tr>
+            <tr><td>设备在两个作业之间要移动，移动时间取决于前后两个作业</td><td>1 | <span class="m">s</span><sub class="m">jk</sub> | C<sub>max</sub></td><td>就是旅行商问题（第 8 章）</td></tr>
+            <tr><td>提升机、站点是共享资源，有时间窗</td><td>超出经典记号，需要资源约束的扩展</td><td>RCPSP、时间索引 MIP（第 12 章）</td></tr>
+          </tbody>
+        </table></div>
+        <p>其中最后一项提醒：三段式记号覆盖的是经典模型。真实系统里的约束（时间窗、共享资源、设备之间的互斥）往往超出记号，这时它的价值是让你说清“最接近的经典问题是什么”，然后知道自己在它的基础上加了什么、复杂度大致会怎样变化。</p>
+      </section>

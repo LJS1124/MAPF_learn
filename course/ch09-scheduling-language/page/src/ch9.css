@@ -1,0 +1,53 @@
+/* ================================================================ 第 9 章新增组件 */
+.saybox { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; background: var(--surface-2); font-size: 13.5px; line-height: 1.75; color: var(--ink-2); min-height: 5em; margin-top: 10px; }
+.saybox b { color: var(--ink); }
+.saybox b.key { color: var(--hot-strong); }
+.saybox b.no { color: var(--bad); }
+.saybox b.ok { color: var(--good); }
+.saybox .mn { font-family: var(--mono); }
+.saybox p { margin: 0 0 6px; }
+.saybox p:last-child { margin-bottom: 0; }
+.twocol { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 900px) { .twocol { grid-template-columns: minmax(0, 1fr); } }
+.twocol > div { min-width: 0; }
+.flags { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 10px; }
+.flags span { font-family: var(--mono); font-size: 12px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line-2); color: var(--ink-2); background: var(--surface); }
+.flags span.ok { border-color: var(--good); color: var(--good); background: var(--good-wash); }
+.flags span.no { border-color: var(--bad); color: var(--bad); background: var(--bad-wash); }
+.flags span.hot { border-color: var(--hot); color: var(--hot-strong); background: var(--hot-wash); }
+.lgd { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 6px; }
+.lgd i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; vertical-align: middle; margin-right: 5px; background: var(--accent); }
+.lgd i.hot { background: var(--hot); }
+.lgd i.gray { background: var(--line-2); }
+.lgd i.good { background: var(--good); }
+.lgd i.bad { background: var(--bad); }
+
+
+svg.gantt { width: 100%; height: auto; display: block; }
+.gantt .tk { font-family: var(--mono); font-size: 10.5px; fill: var(--muted); }
+.gantt .gl { font-family: var(--mono); font-size: 12px; fill: #fff; font-weight: 600; }
+.gantt .gs { font-family: var(--mono); font-size: 10px; fill: var(--ink-2); }
+.gantt .gl + .gs { fill: rgba(255,255,255,.9); }
+.chipj { display: inline-flex; align-items: center; gap: 2px; border: 2px solid var(--line-2); border-radius: 8px; padding: 1px 4px; margin: 2px 4px 2px 0; background: var(--surface); }
+.chipj b { font-family: var(--mono); font-size: 13px; padding: 0 4px; }
+.chipj button { border: 0; background: transparent; cursor: pointer; color: var(--muted); font-size: 11px; padding: 2px 3px; }
+.chipj button:hover:not([disabled]) { color: var(--accent-strong); }
+.chipj button[disabled] { opacity: .25; cursor: default; }
+table.lbt { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.lbt th { text-align: right; font-weight: 500; color: var(--muted); font-size: 11.5px; padding: 5px 6px; border-bottom: 1px solid var(--line-2); white-space: nowrap; }
+table.lbt th:first-child, table.lbt td:first-child, table.lbt th:last-child, table.lbt td:last-child { text-align: left; }
+table.lbt td { padding: 5px 6px; border-bottom: 1px solid var(--line); text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+table.lbt td:first-child { font-family: var(--sans); }
+table.lbt td.sq { font-size: 12px; color: var(--ink-2); }
+table.lbt tr.okrow td { background: var(--good-wash); }
+.notation { font-family: var(--math); font-size: 26px; padding: 10px 16px; background: var(--surface-2); border-radius: 10px; margin: 0 0 10px; }
+.notation .lbl { font-family: var(--sans); font-size: 12px; color: var(--muted); margin-right: 10px; }
+table.cxmap { border-collapse: separate; border-spacing: 3px; font-size: 12px; }
+table.cxmap th { font-weight: 500; color: var(--muted); font-size: 11px; padding: 2px 4px; text-align: center; font-family: var(--math); }
+table.cxmap th.rl { text-align: right; padding-right: 8px; font-family: var(--mono); color: var(--ink-2); }
+table.cxmap td { width: 3.2em; height: 2.2em; text-align: center; border-radius: 5px; cursor: pointer; font-family: var(--mono); font-weight: 600; font-size: 12px; }
+table.cxmap td.cx-P { background: var(--good-wash); color: var(--good); }
+table.cxmap td.cx-W { background: var(--hot-wash); color: var(--hot-strong); }
+table.cxmap td.cx-NP { background: var(--bad-wash); color: var(--bad); }
+table.cxmap td.cx-\? { background: var(--surface-2); color: var(--muted); }
+table.cxmap td.sel { box-shadow: 0 0 0 2.5px var(--ink); }
