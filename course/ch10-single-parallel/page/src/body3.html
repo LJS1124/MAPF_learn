@@ -1,0 +1,92 @@
+
+      <!-- ============================================================ 10.6 -->
+      <section class="chap" id="s6">
+        <h2 class="sec"><span class="no">10.6</span>小结与 Lab</h2>
+        <ol class="takeaways">
+          <li>交换论证：取相邻的两个作业交换，只有这两个的完工时间变化。若交换对目标不会变差，反复交换就走到规则给出的顺序。ΣC 的变化是 <span class="m">p</span><sub class="m">b</sub> − <span class="m">p</span><sub class="m">a</sub>（SPT），Σ<span class="m">w</span>C 的变化是 <span class="m">w</span><sub class="m">a</sub><span class="m">p</span><sub class="m">b</sub> − <span class="m">w</span><sub class="m">b</sub><span class="m">p</span><sub class="m">a</sub>（WSPT），EDD 让最大延迟不变大。</li>
+          <li>规则只对它对应的目标有保证：用 SPT 的交换去优化带权重的 ΣwC，或者用 EDD 的交换去优化 ΣC，目标会变差。</li>
+          <li>Moore–Hodgson：按 EDD 加入，超期就移走已选作业里最长的，得到最少的延误作业个数。加上权重（Σ<span class="m">w</span>U）或者改成延误时间之和（ΣT）就是 NP 难了。</li>
+          <li>并行机上，列表调度的近似比是 2 − 1/<span class="m">m</span>（证明：最后一个作业开始时所有机器都忙），LPT 是 4/3 − 1/(3<span class="m">m</span>)；两个界都是紧的，本章给出了取等号的实例。排序这一步把最坏情形从差近一倍降到差三分之一。</li>
+          <li>允许中断时，P | prmp | C<sub>max</sub> 有最优的绕圈法，C<sub>max</sub> = max(最长作业, 总量/<span class="m">m</span>)，多项式可解；不可中断的 P | | C<sub>max</sub> 是 NP 难的。</li>
+          <li>P2 | | C<sub>max</sub> 是子集和，有 <span class="m">O</span>(<span class="m">n</span> · 总量) 的伪多项式动态规划（弱 NP 难）；<span class="m">m</span> 是变量的 P | | C<sub>max</sub> 是强 NP 难。</li>
+          <li>在项目里，这些规则是有证明的基准，也是在线策略的原型；它们的保证都建立在“作业一开始就全部就位”上，任务陆续到达时要另外分析。</li>
+        </ol>
+
+        <h3 class="sub">术语表</h3>
+        <div class="tbl-wrap">
+          <table class="gloss">
+            <thead><tr><th>中文</th><th>English</th><th>在本章的含义</th></tr></thead>
+            <tbody>
+              <tr><td>交换论证</td><td>interchange (exchange) argument</td><td>交换相邻两个作业，证明目标不变差，从而规则给出最优</td></tr>
+              <tr><td>SPT、WSPT、EDD</td><td>shortest processing time, weighted SPT, earliest due date</td><td>p 小的先；p/w 小的先；d 早的先</td></tr>
+              <tr><td>Moore–Hodgson 算法</td><td>Moore–Hodgson algorithm</td><td>按 EDD 加入，超期就移走最长的作业</td></tr>
+              <tr><td>近似比</td><td>approximation ratio</td><td>算法的结果与最优值的最大比值</td></tr>
+              <tr><td>列表调度、LPT</td><td>list scheduling, longest processing time first</td><td>按顺序放到完工最早的机器；先按加工时间从大到小排序</td></tr>
+              <tr><td>紧的界</td><td>tight bound</td><td>存在让不等式取等号的实例</td></tr>
+              <tr><td>可中断</td><td>preemption (prmp)</td><td>一个作业可以分几段做，可以换机器</td></tr>
+              <tr><td>McNaughton 绕圈法</td><td>McNaughton's wrap-around rule</td><td>可中断时达到 C<sub>max</sub> 下界的排法</td></tr>
+              <tr><td>伪多项式、弱/强 NP 难</td><td>pseudo-polynomial, weakly / strongly NP-hard</td><td>时间与数值成正比；有 / 没有伪多项式算法</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="sub">对照教材</h3>
+        <ul class="refs">
+          <li>Pinedo，<em>Scheduling: Theory, Algorithms, and Systems</em>（第 5 版，Springer 2016）：第 3 章单机（SPT、WSPT、EDD、Moore–Hodgson，交换论证）、第 5 章并行机（LPT、McNaughton）。</li>
+          <li>Smith，“Various optimizers for single-stage production”（1956）：WSPT。Jackson，“Scheduling a production line to minimize maximum tardiness”（1955）：EDD。Moore，“An n job, one machine sequencing algorithm for minimizing the number of late jobs”（Management Science，1968）。</li>
+          <li>Graham，“Bounds for certain multiprocessing anomalies”（1966）与 “Bounds on multiprocessing timing anomalies”（1969）：列表调度与 LPT 的界。McNaughton，“Scheduling with deadlines and loss functions”（1959）。</li>
+          <li>Brucker，<em>Scheduling Algorithms</em>（第 5 版，Springer 2007）：单机与并行机的完整算法与复杂度。Williamson &amp; Shmoys，<em>The Design of Approximation Algorithms</em>（2011）：列表调度和 LPT 的近似分析，以及多项式近似方案。</li>
+        </ul>
+
+        <h3 class="sub">本章 Lab</h3>
+        <div class="lab">
+          <div class="lab-grid">
+            <div>
+              <p style="margin-top:0">代码包 <code>ch10-single-parallel-lab.zip</code> 随本章一起发放。依赖是 numpy、pytest；判分用暴力枚举，不依赖你的代码。</p>
+              <table class="labt">
+                <thead><tr><th>练习</th><th>内容</th><th>对应</th></tr></thead>
+                <tbody>
+                  <tr><td>ex1</td><td><b>三条规则</b>：SPT、WSPT、EDD，并列取下标小的；先填 4 个预测</td><td>10.1</td></tr>
+                  <tr><td>ex2</td><td><b>Moore–Hodgson</b>：最少的延误作业数</td><td>10.2</td></tr>
+                  <tr><td>ex3</td><td><b>交换论证</b>：相邻交换的变化量；冒泡式交换到规则顺序，验证每一步不变差</td><td>10.1</td></tr>
+                  <tr><td>ex4</td><td><b>并行机</b>：LPT、列表调度、两个最坏实例（2m−1 与 4m−1）、McNaughton 绕圈法</td><td>10.3、10.4</td></tr>
+                  <tr><td>ex5</td><td>审 5 个 AI 写的单机排序规则：不看源码，只靠运行结果归类问题</td><td>10.1、10.2</td></tr>
+                  <tr><td>挑战</td><td>P2 | | C<sub>max</sub> 的子集和动态规划（300 个作业也很快）</td><td>10.4</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <pre>pip install -r requirements.txt
+pytest -q                     # 全部练习
+pytest tests/test_ex4.py -q   # 单个练习
+
+# 确认判分本身没问题：参考答案应当全部通过
+LAB_TARGET=solutions pytest -q</pre>
+              <p style="font-size:13.5px;color:var(--muted);margin:10px 0 0">练习 1 要求先在 <code>PREDICTION</code> 里写下预测再运行；跑完测试后，终端最后会把你的预测和实际结果并排列出来。</p>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="sub">下一章</h3>
+        <div class="next">
+          <div class="eyebrow">CHAPTER 11</div>
+          <h4>流水车间与作业车间</h4>
+          <p style="margin:0">一台机器或一组相同的机器，规则就够用了。当作业要依次经过好几台机器（入库 → 提升机 → 出库），问题一下子难了：两台机器串联的流水车间还有 Johnson 规则，三台以上就是强 NP 难。下一章用析取图表示作业车间的调度，再对比 MIP 和约束规划（CP-SAT）两种建模方式。</p>
+        </div>
+      </section>
+
+      <!-- ============================================================ 10.7 -->
+      <section class="chap" id="s7">
+        <h2 class="sec"><span class="no">10.7</span>自测</h2>
+        <p>8 道题，覆盖本章的全部要点。每题选完立即给出解析。</p>
+        <div class="quiz" id="quiz"></div>
+      </section>
+
+      <footer class="foot">
+        数据说明：本章的全部数字由页面内置的相邻交换、Moore–Hodgson、列表调度、LPT、McNaughton 绕圈法和枚举实时计算，并与暴力枚举逐项对拍（环境：<span id="envline2"></span>）：随机实例上三条规则与 Moore–Hodgson 取得枚举最优，Graham 界与 LPT 界成立，最坏实例的比值为 (2m−1)/m 与 (4m−1)/(3m)，都与 Lab 的判分数据同源。
+      </footer>
+    </main>
+  </div>
+</div>
+
+<div class="tip" id="tip" hidden></div>

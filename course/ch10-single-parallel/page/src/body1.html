@@ -1,0 +1,140 @@
+<div class="page">
+  <div class="topbar">
+    <span><b>物流调度与运筹优化</b> · 系统课程</span>
+    <span>第三部分 调度理论 · 第 10 章</span>
+  </div>
+
+  <div class="layout">
+    <nav class="toc" aria-label="本章目录">
+      <div class="toc-title">本章目录</div>
+      <ol>
+        <li><a href="#s1"><span>10.1</span><span>交换论证与三条规则</span></a></li>
+        <li><a href="#s2"><span>10.2</span><span>Moore–Hodgson</span></a></li>
+        <li><a href="#s3"><span>10.3</span><span>并行机与近似比</span></a></li>
+        <li><a href="#s4"><span>10.4</span><span>可中断与弱 NP 难</span></a></li>
+        <li><a href="#s5"><span>10.5</span><span>在项目里的位置</span></a></li>
+        <li><a href="#s6"><span>10.6</span><span>小结与 Lab</span></a></li>
+        <li><a href="#s7"><span>10.7</span><span>自测</span></a></li>
+      </ol>
+      <div class="toc-note">页面里的数字全部实时计算：相邻交换的路径、Moore–Hodgson 的逐步过程、并行机列表调度与 LPT 的最坏实例、McNaughton 绕圈法都由页面内置代码完成，并与暴力枚举对拍。</div>
+    </nav>
+
+    <main>
+      <!-- ============================================================ HERO -->
+      <section class="hero">
+        <div class="eyebrow">CHAPTER 10 · 调度理论</div>
+        <h1><span class="no">10</span>单机与并行机：一条规则为什么就是最优</h1>
+        <p class="sub">第 9 章里反复出现 SPT、WSPT、EDD、Moore–Hodgson，它们是“一条规则就得到最优”的例子。这一章逐个证明它们为什么对，用的是同一个工具：交换论证。再看机器多了以后，快速的列表调度离最优最多差多少，以及允许中断能带来什么。</p>
+        <div class="hero-grid">
+          <div class="card">
+            <h3>学完本章，你能</h3>
+            <ol class="goals">
+              <li>用交换论证证明 SPT、WSPT、EDD 分别是 ΣC<sub>j</sub>、Σw<sub>j</sub>C<sub>j</sub>、L<sub>max</sub> 的最优规则，并能预言“规则与目标不匹配”时交换会让目标变差。</li>
+              <li>手写 Moore–Hodgson，解释为什么“超期就移走最长的”是对的，以及它为什么不能直接推广到带权重的情形。</li>
+              <li>说明并行机上列表调度的近似比 2 − 1/m 和 LPT 的 4/3 − 1/(3m)，构造让它们取等号的最坏实例。</li>
+              <li>用 McNaughton 绕圈法解可中断的并行机问题，用子集和动态规划解 P2 || C<sub>max</sub>，并理解“弱 NP 难”的意思。</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>本章信息</h3>
+            <dl class="meta">
+              <div><dt>用时</dt><dd>阅读与交互 70–100 分钟，Lab 2.5–3 小时</dd></div>
+              <div><dt>前置</dt><dd>第 9 章（三段式记号、目标函数、复杂度地图）。会读 Python 代码。</dd></div>
+              <div><dt>对拍</dt><dd><span class="mono" id="envline"></span>；本章的算法由页面内置代码实现，不依赖求解器。</dd></div>
+              <div><dt>配套</dt><dd>Lab 代码包：5 个练习 + 1 个挑战，含三条规则、Moore–Hodgson、相邻交换、并行机最坏实例与绕圈法，pytest 自动判分</dd></div>
+            </dl>
+          </div>
+        </div>
+        <div class="roadmap" aria-label="课程路线">
+          <div><b>PART 1</b>数学规划基础</div>
+          <div><b>PART 2</b>组合优化</div>
+          <div class="now"><b>PART 3</b>调度理论</div>
+          <div><b>PART 4</b>路径与波次</div>
+          <div><b>PART 5</b>大规模方法</div>
+          <div><b>PART 6</b>启发式</div>
+          <div><b>PART 7</b>多智能体时空规划</div>
+          <div><b>PART 8</b>动态与不确定</div>
+        </div>
+        <div class="roadmap-cap">第三部分 调度理论：调度问题的语言 → <b>单机与并行机（本章）</b>→ 流水车间与作业车间 → 资源与时间窗约束。</div>
+      </section>
+
+      <!-- ============================================================ 10.1 -->
+      <section class="chap" id="s1">
+        <h2 class="sec"><span class="no">10.1</span>交换论证与三条规则</h2>
+        <p class="lead">单机上排 <span class="m">n</span> 个作业有 <span class="m">n</span>! 种顺序，却常常只需要按某个量排一下序。为什么这样是对的？答案是一个很朴素的想法：<b>如果一个顺序里有相邻的两个作业“排反了”，把它们换过来，目标不会变差。</b>一直换下去，就走到规则给出的顺序。</p>
+        <p>取顺序里相邻的两个作业 <span class="m">a</span>（在前）和 <span class="m">b</span>（在后），它们开始于时刻 <span class="m">t</span>。交换 <span class="m">a</span> 和 <span class="m">b</span> 只改变这两个作业的完工时间，别的作业的完工时间都不受影响（前面的没动，后面的作业开始时刻仍是 <span class="m">t</span> + <span class="m">p</span><sub class="m">a</sub> + <span class="m">p</span><sub class="m">b</span>）。</p>
+        <div class="theorems">
+          <div class="thm"><div class="tn">SPT：1 | | ΣC<sub>j</sub></div><p>交换前两个作业的完工时间是 <span class="m">t</span> + <span class="m">p</span><sub class="m">a</sub> 和 <span class="m">t</span> + <span class="m">p</span><sub class="m">a</sub> + <span class="m">p</span><sub class="m">b</sub>；交换后是 <span class="m">t</span> + <span class="m">p</span><sub class="m">b</sub> 和 <span class="m">t</span> + <span class="m">p</span><sub class="m">a</sub> + <span class="m">p</span><sub class="m">b</sub>。ΣC 的变化 = <b><span class="m">p</span><sub class="m">b</sub> − <span class="m">p</span><sub class="m">a</sub></b>。</p><p class="use">若 <span class="m">p</span><sub class="m">a</sub> &gt; <span class="m">p</span><sub class="m">b</sub>，交换让 ΣC 减少。所以最优顺序里不会有“长的在短的前面”的相邻对，即加工时间从小到大。</p></div>
+          <div class="thm"><div class="tn">WSPT（Smith 规则）：1 | | Σw<sub>j</sub>C<sub>j</sub></div><p>同样的算法，变化 = <b><span class="m">w</span><sub class="m">a</sub><span class="m">p</span><sub class="m">b</sub> − <span class="m">w</span><sub class="m">b</sub><span class="m">p</span><sub class="m">a</sub></b>。</p><p class="use">它 ≤ 0 当且仅当 <span class="m">p</span><sub class="m">b</sub>/<span class="m">w</span><sub class="m">b</sub> ≤ <span class="m">p</span><sub class="m">a</sub>/<span class="m">w</span><sub class="m">a</sub>。所以按 <span class="m">p</span><sub class="m">j</sub>/<span class="m">w</span><sub class="m">j</sub> 从小到大排（“单位权重的加工时间”越小越先做）。权重全为 1 就是 SPT。</p></div>
+          <div class="thm"><div class="tn">EDD（Jackson 规则）：1 | | L<sub>max</sub></div><p>设 <span class="m">d</span><sub class="m">a</sub> &gt; <span class="m">d</span><sub class="m">b</sub>，<span class="m">a</span> 排在前面。交换前，<span class="m">b</span> 的延迟是 <span class="m">L</span><sub class="m">b</sub> = <span class="m">t</span> + <span class="m">p</span><sub class="m">a</sub> + <span class="m">p</span><sub class="m">b</sub> − <span class="m">d</span><sub class="m">b</sub>。交换后 <span class="m">b</span> 的延迟更小，<span class="m">a</span> 的延迟 <span class="m">t</span> + <span class="m">p</span><sub class="m">a</sub> + <span class="m">p</span><sub class="m">b</sub> − <span class="m">d</span><sub class="m">a</sub> 也小于交换前 <span class="m">b</span> 的延迟（因为 <span class="m">d</span><sub class="m">a</sub> &gt; <span class="m">d</span><sub class="m">b</sub>）。</p><p class="use">这两个作业的最大延迟不会变大，所以最大延迟不会变大。最优顺序里可以让交货期早的先做。</p></div>
+        </div>
+        <p>结论：从任意一个顺序出发，只要还有“排反了”的相邻对，就交换，目标不变差；交换总会结束（每次交换减少逆序对），结束的顺序就是规则给出的顺序。所以规则给出的顺序不比任何一个起点差，也就是最优。这就是<b>交换论证</b>（interchange argument）。证明不需要枚举，只需要看两个相邻的作业。</p>
+
+        <div class="predict" id="p1"></div>
+
+        <figure class="fig wide gatehost" id="fig1">
+          <div class="fig-body">
+            <div class="fig-toolbar">
+              <span class="label">交换规则</span><div class="seg" id="xcRule" role="group" aria-label="交换规则"></div>
+              <span class="label">观察的目标</span><div class="seg" id="xcObj" role="group" aria-label="目标"></div>
+              <span class="label">起点</span><div class="seg" id="xcStart" role="group" aria-label="起点顺序"></div>
+            </div>
+            <div class="flags" id="xcFlags"></div>
+            <svg class="gantt" id="xcGantt" role="img" aria-label="一台提升机上的甘特图"></svg>
+            <div class="stepper">
+              <button class="btn" id="xcPrev" type="button">◀ 上一步</button>
+              <button class="btn primary" id="xcNext" type="button">交换下一对 ▶</button>
+              <button class="btn ghost" id="xcAll" type="button">换到底</button>
+              <button class="btn ghost" id="xcReset" type="button">重来</button>
+              <span class="txt" id="xcTxt"></span>
+            </div>
+            <div class="twocol">
+              <div class="saybox" id="xcSay"></div>
+              <div class="tbl-wrap"><table class="lbt" id="xcTable" aria-label="每一步的目标值"></table></div>
+            </div>
+          </div>
+          <figcaption><b>图 10-1</b>交换论证的动画（第 9 章的 6 个托盘）。每一步：从左往右找第一个“后一个按规则应当排在前面”的相邻对，交换。黑框是这一步交换的两个作业。规则与目标匹配时（SPT–ΣC、WSPT–Σw<sub>j</sub>C<sub>j</sub>、EDD–L<sub>max</sub>）目标从不变差；换成不匹配的组合，交换有时会让目标变差。点表里的一行可以跳到那一步。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>SPT 观察 ΣC，从 J1…J6 出发：</b>7 次交换，目标 104、100、98、93、90、89、86、84，每次都下降，最后是最优的 84。每一步的降幅正好是公式里的 <span class="m">p</span><sub class="m">a</sub> − <span class="m">p</span><sub class="m">b</sub>。</p>
+        <p><b>切到 WSPT 观察 Σw<sub>j</sub>C<sub>j</sub>：</b>8 次交换，322 一路降到 234，从不变差。<b>切到 EDD 观察 L<sub>max</sub>：</b>目标不变差，16 → 7，中间有不少步保持 16 不变，因为最大延迟由别的作业决定。</p>
+        <p><b>再试不匹配的组合。</b>把规则选成 SPT，目标选成 Σw<sub>j</sub>C<sub>j</sub>：交换按“p 小的先”，但目标关心权重。从 J1…J6 出发，第 6 步 252 变成 256，变差了，并且最后停在 252，比最优的 234 高。把规则选成 EDD，目标选成 ΣC<sub>j</sub>，第 1 步就变差，最后是 108，比 SPT 的 84 差得多。<b>规则只对它对应的目标有保证</b>，这也是第 9 章说“选目标就是选规则”的原因。</p>
+      </section>
+
+      <!-- ============================================================ 10.2 -->
+      <section class="chap" id="s2">
+        <h2 class="sec"><span class="no">10.2</span>Moore–Hodgson：让延误的作业最少</h2>
+        <p class="lead">前三条规则都是“排个序”。ΣU<sub>j</sub>（延误作业个数）不一样：它不在乎晚多少，只在乎晚不晚。既然有的作业注定晚，不如干脆让它们晚到底，把机器的时间让给还有希望的作业。</p>
+        <p>Moore–Hodgson（1968）的做法：</p>
+        <ol class="steps">
+          <li>按交货期从早到晚（EDD）依次把作业加进“准时集合”。</li>
+          <li>每加一个，检查现在的完工时间是否超过这个作业的交货期。</li>
+          <li>超了，就从准时集合里<b>移走加工时间最长的一个</b>（可以是刚加进来的）。被移走的作业放弃，排在最后，接受延误。</li>
+        </ol>
+        <p>为什么移最长的？要让剩下的作业尽早完成，就要腾出最多的时间。移走任何一个作业都能让后面的完工时间提早，移走最长的提早得最多，而且被放弃的代价（少一个准时作业）对每个作业都一样，都是 1。这就是“个数”目标的特点：所有作业的价值都是 1，所以要放弃“占地方最大”的那个。</p>
+
+        <div class="predict" id="p2"></div>
+
+        <figure class="fig wide gatehost" id="fig2">
+          <div class="fig-body">
+            <div class="fig-toolbar"><span class="label">例子</span><div class="seg" id="moEx" role="group" aria-label="例子"></div></div>
+            <div class="statrow" id="moStats"></div>
+            <svg class="gantt" id="moGantt" role="img" aria-label="当前准时集合的甘特图"></svg>
+            <div class="stepper">
+              <button class="btn" id="moPrev" type="button">◀ 上一个</button>
+              <button class="btn primary" id="moNext" type="button">加入下一个作业 ▶</button>
+              <button class="btn ghost" id="moAll" type="button">到最后</button>
+              <button class="btn ghost" id="moReset" type="button">重来</button>
+              <span class="txt" id="moTxt"></span>
+            </div>
+            <div class="saybox" id="moSay"></div>
+          </div>
+          <figcaption><b>图 10-2</b>Moore–Hodgson 的过程。作业按 EDD 顺序逐个加入，图里是当前准时集合的排法（黑框是刚加入的作业）；一旦超期，就移走集合里最长的作业。最后一步灰色的是被放弃的（延误）作业。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>例 1：</b>EDD 顺序是 J4、J5、J1、J3、J6、J2。加入 J4（2），加入 J5，完工时间 10，超过它的交货期 9，超期：在 {J4, J5} 里移走最长的 J5（8），完工时间回到 2。之后 J1、J3、J6、J2 都按期。只延误 J5 一个，是最优的。直接按 EDD 排，延误 5 个。</p>
+        <p><b>例 2</b>更紧：7 个作业，EDD 直接排延误 6 个；Moore–Hodgson 依次移走 J3、J2、J7，延误 3 个，仍是最优（枚举核对）。</p>
+        <div class="callout key"><b class="t">别推广过头</b>加上权重，1 | | Σw<sub>j</sub>U<sub>j</sub>（最小化延误作业的权重之和）就是背包问题的推广，是弱 NP 难的（第 9 章的地图里是橙色）。“移走最长的”不再对：有时该移走一个短的但权重小的。同样，1 | | ΣT<sub>j</sub>（延误时间之和）也是 NP 难的。看起来很像的目标，难度可以差得很远。</div>
+      </section>

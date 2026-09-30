@@ -1,0 +1,63 @@
+
+      <!-- ============================================================ 10.3 -->
+      <section class="chap" id="s3">
+        <h2 class="sec"><span class="no">10.3</span>并行机：列表调度有多差</h2>
+        <p class="lead">机器不止一台，最小化 C<sub>max</sub>（让最后一个作业尽快完成）就成了均衡负荷的问题。P2 | | C<sub>max</sub> 已经是 NP 难，没有简单的规则保证最优。退而求其次：<b>一个很快的算法，最坏能比最优差多少？</b>这个“最多差多少倍”叫<b>近似比</b>。</p>
+        <p>列表调度（第 9 章）：按给定的顺序，把每个作业放到当前完工最早的机器上。它的近似比有一个简洁的证明（Graham，1966）：设最后完工的作业是 <span class="m">l</span>。它开始的时候，所有机器都是忙的（否则会更早放上去），所以此时每台机器的负荷至少是它的开始时刻 <span class="m">S</span><sub class="m">l</sub>，于是 <span class="m">S</span><sub class="m">l</sub> ≤ (总量 − <span class="m">p</span><sub class="m">l</sub>)/<span class="m">m</span>。因此</p>
+        <div class="formula one">
+          <span class="k">Graham 界</span><span class="e"><i>C</i><sub>max</sub> = <i>S</i><sub>l</sub> + <i>p</i><sub>l</sub> ≤ 总量/<i>m</i> + (1 − 1/<i>m</i>)<i>p</i><sub>l</sub> ≤ (2 − 1/<i>m</i>) · OPT</span><span class="n">用到 OPT ≥ 总量/m 和 OPT ≥ p<sub>l</sub></span>
+        </div>
+        <p>如果先把作业按加工时间从大到小排（<b>LPT</b>，longest processing time first），再做列表调度，界会好很多：<span class="m">C</span><sub class="m">max</sub> ≤ (4/3 − 1/(3<span class="m">m</span>)) · OPT（Graham，1969）。这两个界都是<b>紧的</b>：能构造出让它们取等号的实例。</p>
+
+        <div class="predict" id="p3"></div>
+
+        <figure class="fig wide gatehost" id="fig3">
+          <div class="fig-body">
+            <div class="fig-toolbar">
+              <span class="label">实例</span><div class="seg" id="pmMode" role="group" aria-label="实例"></div>
+              <span id="pmMWrap"><span class="label">机器数 <span class="m">m</span> = <b id="pmM" style="font-family:var(--mono);color:var(--hot-strong)"></b></span> <input type="range" id="pmMs" min="2" max="6" step="1" value="4" aria-label="机器数" style="width:10rem;vertical-align:middle"></span>
+            </div>
+            <div class="statrow" id="pmStats"></div>
+            <svg class="gantt" id="pmGantt" role="img" aria-label="列表调度或 LPT 的甘特图"></svg>
+            <div id="pmOptWrap"><div style="font-size:12.5px;color:var(--muted);margin:2px 0 -4px">对照：最优排法</div><svg class="gantt" id="pmGantt2" role="img" aria-label="最优排法的甘特图"></svg></div>
+            <div class="saybox" id="pmSay"></div>
+          </div>
+          <figcaption><b>图 10-3</b>相同并行机。方块里是作业的加工时间。“列表调度的最坏实例”：先来 <span class="m">m</span>(<span class="m">m</span>−1) 个单位作业，最后来一个长度 <span class="m">m</span> 的作业。“LPT 的最坏实例”：2<span class="m">m</span>+1 个作业。第三个模式是下一节的绕圈法。最优排法是构造出来的（并在 <span class="m">m</span> ≤ 3 时用枚举核对过）。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>列表调度，m = 4：</b>12 个单位作业把 4 台机器各铺到 3，最后的长作业（长度 4）接在任何一台后面，C<sub>max</sub> = 3 + 4 = 7。最优是让长作业独占一台，12 个单位作业平分给另外 3 台，每台 4，C<sub>max</sub> = 4。比值 7/4 = 1.75 = 2 − 1/4，正好是 Graham 界。拖动 <span class="m">m</span>：比值 (2<span class="m">m</span>−1)/<span class="m">m</span> 随机器数增加，趋向 2。</p>
+        <p><b>LPT，m = 4：</b>9 个作业，LPT 得到 15，最优 12，比值 1.25 = 4/3 − 1/12，正好是 LPT 的界。所以 LPT 已经很好，最多差三分之一；列表调度不排序，最坏差近一倍。这个对比说明<b>排序这一步有多值钱</b>。</p>
+      </section>
+
+      <!-- ============================================================ 10.4 -->
+      <section class="chap" id="s4">
+        <h2 class="sec"><span class="no">10.4</span>可中断与弱 NP 难</h2>
+        <p class="lead">前面的所有作业都不能中断。允许中断（prmp）之后，同一个作业可以先做一部分，换到别的机器（或过一会儿）再做完，问题就大不一样。</p>
+        <p><b>McNaughton 绕圈法</b>（1959）：允许中断时，P | prmp | C<sub>max</sub> 的最优值恰好是下界</p>
+        <div class="formula one">
+          <span class="k">可中断的下界</span><span class="e"><i>C</i><sub>max</sub> = max( max<sub>j</sub> <i>p</i><sub>j</sub>, (Σ<i>p</i><sub>j</sub>)/<i>m</i> )</span><span class="n">任何排法都不可能更小；绕圈法能达到</span>
+        </div>
+        <p>做法：把作业排成一行，第 1 台机器装到 <span class="m">C</span>，再换第 2 台，一个作业装不下就断开，剩下的部分从下一台机器的开头继续。同一个作业的两段一段在前一台机器的末尾，一段在后一台的开头，时间不重叠（因为 <span class="m">C</span> ≥ 它的长度）。图 10-3 切到“可中断：绕圈法”看一个例子：3 台机器，作业 9、9、9、3，总量 30，C<sub>max</sub> = 10；不能中断时最优是 12。</p>
+        <p>这就是复杂度地图里 P | prmp | C<sub>max</sub> 是绿色、P | | C<sub>max</sub> 是橙色或红色的原因：<b>“不能中断”是难点所在</b>。物流里“一个托盘可以拆成两批搬”“一辆车的任务可以换人接着做”对应可中断；托盘不能拆、车不能中途换，就是不可中断。</p>
+        <h3 class="sub">P2 | | C<sub>max</sub>：弱 NP 难</h3>
+        <p>不可中断时，两台机器上的 C<sub>max</sub> 是子集和问题：把作业分成两堆，让较大的一堆尽量小，也就是找一堆作业的加工时间之和 <span class="m">s</span> 尽量接近总量的一半（不超过）。用一维的动态规划：reach[<span class="m">s</span>] 表示能否凑出 <span class="m">s</span>，逐个作业更新，时间 <span class="m">O</span>(<span class="m">n</span> · 总量)。最优 C<sub>max</sub> = 总量 − 最大的可达 <span class="m">s</span>。</p>
+        <p>它是<b>伪多项式</b>的：时间与数值的大小（总量）成正比，而不是与它的位数成正比。加工时间是秒、总量几千时，没有问题；数值是毫秒、总量上亿时就慢了。这就是“弱 NP 难”的含义。对比：m 是变量的 P | | C<sub>max</sub> 是<b>强 NP 难</b>的（3-划分），连伪多项式算法也没有（除非 P = NP）。Lab 挑战让你实现这个动态规划，并在 300 个作业上运行。</p>
+      </section>
+
+      <!-- ============================================================ 10.5 -->
+      <section class="chap" id="s5">
+        <h2 class="sec"><span class="no">10.5</span>在项目里的位置</h2>
+        <p class="lead">这一章的规则都很简单，价值在于它们是<b>有证明的基准</b>：你的调度系统在简化的情形下，至少应当不比它们差。</p>
+        <div class="tbl-wrap"><table class="gloss">
+          <thead><tr><th>你在乎的</th><th>规则</th><th>保证</th></tr></thead>
+          <tbody>
+            <tr><td>一台提升机，托盘平均等待最短</td><td>SPT（有权重用 WSPT）</td><td>最优（没有释放时间）</td></tr>
+            <tr><td>每个托盘有发运截止时间，最坏的一单别迟太多</td><td>EDD</td><td>L<sub>max</sub> 最优</td></tr>
+            <tr><td>尽量多的托盘赶上截止时间</td><td>Moore–Hodgson</td><td>准时的个数最多</td></tr>
+            <tr><td>多台提升机、多辆车，负荷要均衡</td><td>LPT + 列表调度</td><td>C<sub>max</sub> 至多是最优的 4/3 − 1/(3m) 倍</td></tr>
+            <tr><td>可以把一个大任务拆成几批交给不同的车</td><td>McNaughton 绕圈法</td><td>C<sub>max</sub> 最优（可中断）</td></tr>
+          </tbody>
+        </table></div>
+        <p>两点提醒。第一，这些保证都假设作业<b>一开始就全部在那里</b>（没有释放时间）。任务陆续到达时，第 9 章的地图里 1 | <span class="m">r</span><sub class="m">j</sub> | L<sub>max</sub>、1 | <span class="m">r</span><sub class="m">j</sub> | ΣC<sub>j</sub> 都是强 NP 难，规则只能当作在线策略（每次机器空闲时，从队列里按规则挑一个），没有最优保证；可中断的版本（SRPT、可中断 EDD）反而是多项式的，见第 30 章。第二，交换论证不只是证明规则用的：<b>它还告诉你 MIP 里可以加哪些有效不等式</b>。如果两个相邻作业按规则排反了不会更好，就可以在模型里禁止这种排法，减小搜索空间（第 11 章）。</p>
+      </section>

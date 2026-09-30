@@ -26,6 +26,7 @@ CHAPTERS = {
     "ch07-capacitated": ("ch07-capacitated", ["#btAll", "#cutAll"]),
     "ch08-tsp-vrp": ("ch08-tsp-vrp", ["#secAll"]),
     "ch09-scheduling-language": ("ch09-scheduling-language", []),
+    "ch10-single-parallel": ("ch10-single-parallel", ["#xcAll", "#moAll"]),
 }
 
 PRINT_CSS = """
