@@ -1,0 +1,77 @@
+/* ================================================================ 第 7 章新增组件 */
+.saybox { border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; background: var(--surface-2); font-size: 13.5px; line-height: 1.75; color: var(--ink-2); min-height: 5em; margin-top: 10px; }
+.saybox b { color: var(--ink); }
+.saybox b.key { color: var(--hot-strong); }
+.saybox b.no { color: var(--bad); }
+.saybox b.ok { color: var(--good); }
+.saybox .mn { font-family: var(--mono); }
+.saybox p { margin: 0 0 6px; }
+.saybox p:last-child { margin-bottom: 0; }
+.twocol { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+@media (max-width: 900px) { .twocol { grid-template-columns: minmax(0, 1fr); } }
+.twocol > div { min-width: 0; }
+.flags { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 10px; }
+.flags span { font-family: var(--mono); font-size: 12px; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line-2); color: var(--ink-2); background: var(--surface); }
+.flags span.ok { border-color: var(--good); color: var(--good); background: var(--good-wash); }
+.flags span.no { border-color: var(--bad); color: var(--bad); background: var(--bad-wash); }
+.flags span.hot { border-color: var(--hot); color: var(--hot-strong); background: var(--hot-wash); }
+.lgd { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 6px; }
+.lgd i { display: inline-block; width: 14px; height: 10px; border-radius: 2px; vertical-align: middle; margin-right: 5px; background: var(--accent); }
+.lgd i.hot { background: var(--hot); }
+.lgd i.gray { background: var(--line-2); }
+.lgd i.good { background: var(--good); }
+.lgd i.bad { background: var(--bad); }
+
+table.lbt { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.lbt th { text-align: right; font-weight: 500; color: var(--muted); font-size: 11.5px; padding: 5px 6px; border-bottom: 1px solid var(--line-2); white-space: nowrap; }
+table.lbt th:first-child, table.lbt td:first-child { text-align: left; }
+table.lbt td { padding: 5px 6px; border-bottom: 1px solid var(--line); text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.lbt tr.frac td { background: var(--hot-wash); }
+table.lbt tr.take td:first-child { color: var(--accent-strong); font-weight: 600; }
+
+/* 背包 */
+svg.kb, svg.bt, svg.tree, svg.bins { width: 100%; height: auto; display: block; }
+.kb text, .tree text, .bins text { font-family: var(--mono); font-size: 11px; fill: var(--ink-2); }
+.kb .blk { fill: var(--accent-wash-2); stroke: var(--accent-strong); stroke-width: 1.4; }
+.kb .blk.frac { fill: var(--hot-wash); stroke: var(--hot); }
+.kb .blk.out { fill: var(--surface-2); stroke: var(--line-2); stroke-dasharray: 3 3; }
+.kb .blk.opt { fill: var(--good-wash); stroke: var(--good); }
+.kb .capline { stroke: var(--ink); stroke-width: 1.6; }
+.kb .lab { font-size: 11.5px; fill: var(--ink); }
+.kb .cap { font-size: 11.5px; fill: var(--ink); font-weight: 600; }
+.kb .row { font-size: 12px; fill: var(--muted); }
+
+/* 分支定界树 */
+.tree .edge { stroke: var(--line-2); stroke-width: 1.6; fill: none; }
+.tree .edge.now { stroke: var(--hot); stroke-width: 2.4; }
+.tree .nd rect { fill: var(--surface); stroke: var(--line-2); stroke-width: 1.6; }
+.tree .nd.branch rect { fill: var(--accent-wash); stroke: var(--accent-strong); }
+.tree .nd.pruned rect { fill: var(--surface-2); stroke: var(--muted); stroke-dasharray: 3 3; }
+.tree .nd.infeasible rect { fill: var(--bad-wash); stroke: var(--bad); }
+.tree .nd.integer rect { fill: var(--good-wash); stroke: var(--good); stroke-width: 2.2; }
+.tree .nd.now rect { stroke: var(--hot); stroke-width: 3; }
+.tree .nd text { fill: var(--ink); font-size: 11px; }
+.tree .nd text.sm { fill: var(--muted); font-size: 10px; }
+.tree .el { font-size: 10.5px; fill: var(--ink-2); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; }
+
+/* 广义指派表 */
+table.gapt { border-collapse: separate; border-spacing: 2px; font-family: var(--mono); font-size: 12px; }
+table.gapt th { font-weight: 500; color: var(--muted); font-size: 11px; padding: 2px 4px; text-align: center; white-space: nowrap; }
+table.gapt th.rl { text-align: right; color: var(--ink-2); padding-right: 8px; }
+table.gapt td { min-width: 2.7em; height: 2.9em; text-align: center; border-radius: 5px; background: var(--surface-2); color: var(--muted); padding: 0 2px; line-height: 1.15; }
+table.gapt td.on { background: var(--accent-wash-2); color: var(--accent-strong); font-weight: 600; }
+table.gapt td.fr { background: var(--hot-wash); color: var(--hot-strong); font-weight: 600; box-shadow: inset 0 0 0 1.5px var(--hot); }
+table.gapt td small { display: block; font-size: 10px; font-weight: 400; opacity: 0.8; }
+table.gapt td.ip { box-shadow: inset 0 0 0 2px var(--good); }
+table.gapt td.fr.ip { box-shadow: inset 0 0 0 2px var(--good); }
+table.gapt tr.wrow th, table.gapt tr.wrow td { background: none; height: 1.8em; color: var(--ink-2); }
+table.gapt td.load { background: none; text-align: left; padding-left: 8px; color: var(--ink-2); }
+table.gapt td.load.over { color: var(--bad); font-weight: 600; }
+.cutlist { font-size: 13px; line-height: 1.8; margin: 4px 0 0; padding-left: 1.2em; }
+.cutlist li { margin: 0; }
+
+/* 装载 */
+.bins .col { fill: var(--surface-2); stroke: var(--line-2); stroke-width: 1.2; }
+.bins .it { stroke: var(--surface); stroke-width: 1.5; }
+.bins .capl { stroke: var(--ink); stroke-dasharray: 4 3; stroke-width: 1.2; }
+.bins .bt { fill: var(--ink); font-size: 11px; text-anchor: middle; }

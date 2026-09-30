@@ -23,6 +23,7 @@ OUT.mkdir(exist_ok=True)
 CHAPTERS = {
     "ch05-assignment": ("ch05-assignment", ["#arrAll"]),
     "ch06-network-flow": ("ch06-network-flow", ["#spAll", "#mfAll", "#nmSeg button:nth-child(3)"]),
+    "ch07-capacitated": ("ch07-capacitated", ["#btAll", "#cutAll"]),
 }
 
 PRINT_CSS = """

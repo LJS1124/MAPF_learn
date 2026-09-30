@@ -1,0 +1,76 @@
+
+      <!-- ============================================================ 7.3 -->
+      <section class="chap" id="s3">
+        <h2 class="sec"><span class="no">7.3</span>广义指派：载重让整数性消失</h2>
+        <p class="lead">第 5 章的指派有一条规定：每辆车至多做一个任务。现实里一辆车一趟可以做好几个，只要载得下。把“至多一个”换成“载重上限”，就得到<b>广义指派问题</b>（GAP）。</p>
+        <p>本章的例子：3 辆车 V1、V2、V3，载重分别是 15、16、17 个托盘；10 个任务，托盘数分别是 4、3、4、6、4、3、3、8、3、2，一共 40 个。每辆车做每个任务的行驶时间不同，目标是总行驶时间最小。每个任务恰好一辆车，每辆车分到的托盘数不能超过载重。</p>
+        <div class="formula one">
+          <span class="k">GAP</span><span class="e">min Σ<sub>ij</sub> <i>c</i><sub>ij</sub><i>x</i><sub>ij</sub>,　Σ<sub>i</sub> <i>x</i><sub>ij</sub> = 1,　Σ<sub>j</sub> <i>w</i><sub>j</sub><i>x</i><sub>ij</sub> ≤ <i>Q</i><sub>i</sub>,　<i>x</i><sub>ij</sub> ∈ {0, 1}</span><span class="n">每辆车的载重约束是一行背包</span>
+        </div>
+        <p>对比第 5 章：任务约束（每个任务恰好一辆车）不变，车的约束从“至多一个任务”变成“托盘数之和不超过载重”。每辆车的这一行就是一个背包约束，系数是 <span class="m">w</span><sub class="m">j</sub>。第 5 章的全单模证明用到“每列恰有两个 1”，现在每一列除了任务行的 1，还有载重行的 <span class="m">w</span><sub class="m">j</sub>，证明不再成立。</p>
+        <p>这个问题是 NP 难的：它包含了装箱这样的问题，没有已知的多项式算法。LP 松弛仍然好解，但顶点可以是分数。一个粗略的计数：变量 <span class="m">m n</span> 个，约束 <span class="m">n</span> + <span class="m">m</span> 行，LP 的一个顶点至多有 <span class="m">n</span> + <span class="m">m</span> 个非零变量；每个任务至少占一个，所以至多 <span class="m">m</span> 个任务被劈给几辆车。车越少，分数越少，但只要有载重，就可能有。</p>
+
+        <figure class="fig wide" id="fig3">
+          <div class="fig-body">
+            <div class="fig-toolbar">
+              <span class="label">每辆车的载重加减 <b id="gapDv" style="font-family:var(--mono);color:var(--hot-strong)">0</b></span>
+              <input type="range" id="gapD" min="-3" max="6" step="1" value="0" aria-label="载重的加减量" style="width:16rem">
+            </div>
+            <div class="statrow" id="gapStats"></div>
+            <div class="twocol">
+              <div class="mtx-wrap"><table class="gapt" id="gapTbl" aria-label="广义指派：费用与 LP 解"></table></div>
+              <div><div class="saybox" id="gapSay"></div></div>
+            </div>
+            <div class="lgd"><span><i></i>LP 里整个分给这辆车</span><span><i class="hot"></i>LP 里劈成几份（数字是这辆车分到的比例）</span><span><i class="good"></i>整数最优的派法（绿框）</span></div>
+          </div>
+          <figcaption><b>图 7-3</b>广义指派（3 辆车 × 10 个任务）。格子里是行驶时间（秒），表头一行是托盘数，最右边是这辆车的载重使用情况（LP 解里加权的托盘数 / 载重）。拖动载重的加减量，看 LP 与整数最优的关系。LP 用页面内置的单纯形法求解，整数最优由回溯枚举得到。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>默认载重（加减 0）：</b>LP 值 220，整数最优 234，差 14。LP 的解里只有 T3 被劈开：V1 和 V2 各负责一半。T3 有 4 个托盘，V1 的 15 个托盘已经被别的任务占满，装不下整个 T3，LP 就让 V2 顺手再装一半。整数解做不到，要重新安排好几个任务，总时间多 14 秒。</p>
+        <p><b>把载重调大：</b>加 2 以后，LP 值 212，整数最优也是 212，两者相等。这时每个任务拿走最便宜的车，三辆车分到的托盘数是 16、18、6，都在载重之内，载重约束没有起作用，问题退化成“每个任务选最便宜的车”，整数性回来了。加 3、4 时 LP 值仍是 212，但求解器返回的顶点里 T9 仍是分数。原因是这一行有另一个整数的最优解，返回哪一个顶点取决于算法，整数性没有了保证。</p>
+        <p><b>把载重调小：</b>减 1 时 LP 225，整数最优 234；减 2 时 LP 230，整数最优 239；减 3 时三辆车合计只能载 39 个托盘，装不下 40 个，无解。载重越紧，越靠近装箱问题，LP 和整数最优的差越不稳定。</p>
+        <div class="callout key"><b class="t">整数性什么时候还在</b>载重不起作用（每辆车都装得下它最便宜的那些任务）时，GAP 就是没有容量的指派，LP 解是整数。载重一旦起作用，LP 就会把一个任务劈给几辆车。第 5 章的冲突对让 LP 出现“两个派法各一半”，这里是“一个任务分给两辆车各一半”，来源不同，症状类似。</div>
+      </section>
+
+      <!-- ============================================================ 7.4 -->
+      <section class="chap" id="s4">
+        <h2 class="sec"><span class="no">7.4</span>覆盖割：把 LP 拉回来</h2>
+        <p class="lead">LP 松弛的下界是 220，整数最优是 234，中间的 14 秒是 LP 的“虚假收益”。直接分支可以解出来，但节点会多。第 4 章讲过另一条路：加割平面，把 LP 的可行域收紧，同时不删掉任何整数解。</p>
+        <p>每辆车的载重约束是一个背包，背包有一类经典的割，叫<b>覆盖割</b>。</p>
+        <div class="theorems">
+          <div class="thm"><div class="tn">覆盖</div><p>任务集合 <span class="m">S</span> 是车 <span class="m">i</span> 的一个<b>覆盖</b>，如果 <span class="m">S</span> 里所有任务的托盘数之和超过 <span class="m">Q</span><sub class="m">i</sub>。极小覆盖：去掉其中任何一个，就装得下了。</p></div>
+          <div class="thm"><div class="tn">覆盖割</div><p>覆盖 <span class="m">S</span> 里的任务，车 <span class="m">i</span> 至多装其中 |<span class="m">S</span>| − 1 个：Σ<sub>j∈S</sub> <span class="m">x</span><sub class="m">ij</sub> ≤ |<span class="m">S</span>| − 1。</p><p class="use">有效：全装进去就超载了，所以任何整数可行的派法都满足它，没有整数解被删掉。</p></div>
+          <div class="thm"><div class="tn">分离</div><p>LP 解里，如果某个极小覆盖上的 <span class="m">x</span> 之和超过 |<span class="m">S</span>| − 1，这条割就被违反了，可以加进去，删掉当前这个分数解。</p><p class="use">这是启发式的分离：按 <span class="m">x</span> 从大到小取任务，取到超载为止，再去掉多余的任务使之极小。</p></div>
+        </div>
+        <p>做法就是<b>根节点上的割平面循环</b>：解 LP，对每辆车找违反的覆盖，加入，再解 LP，直到找不到为止。每加一轮，下界只增不减，且始终不超过整数最优（因为割是有效的）。</p>
+
+        <div class="predict" id="p2"></div>
+
+        <figure class="fig wide gatehost" id="fig4">
+          <div class="fig-body">
+            <div class="flags" id="cutFlags"></div>
+            <div class="twocol">
+              <div>
+                <div class="mtx-wrap"><table class="gapt" id="cutTbl" aria-label="每一轮的 LP 解"></table></div>
+                <div class="stepper">
+                  <button class="btn" id="cutPrev" type="button">◀ 上一轮</button>
+                  <button class="btn primary" id="cutNext" type="button">下一轮 ▶</button>
+                  <button class="btn ghost" id="cutAll" type="button">到最后</button>
+                  <button class="btn ghost" id="cutReset" type="button">重来</button>
+                  <span class="txt" id="cutTxt"></span>
+                </div>
+                <div class="saybox" id="cutSay"></div>
+              </div>
+              <div><svg class="chart" id="cutChart" role="img" aria-label="下界随割的轮数上升"></svg></div>
+            </div>
+          </div>
+          <figcaption><b>图 7-4</b>根节点的覆盖割循环（载重 15 / 16 / 17）。左：每一轮的 LP 解（橙色是分数）；右：下界的变化，最右边是整数最优 234。顶上的两个数字是分支定界的节点数：不加割，和先加这几条割再分支。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>第 1 轮</b>只有载重约束，LP 220，T3 被劈给 V1 和 V2。页面分离出两条割：V1 上的 T3、T4、T5、T9（托盘数 4 + 6 + 4 + 3 = 17 &gt; 15）至多选 3 个；V2 上的 T1、T3、T8、T10（4 + 4 + 8 + 2 = 18 &gt; 16）至多选 3 个。LP 解里这两组的和都是 3.5，被违反了。</p>
+        <p><b>第 2 轮</b>加了两条割以后 LP 上升到 229。新的分数解又违反了两条覆盖：V1 上的 T2、T3、T4、T5，V2 上的 T1、T8、T9、T10。<b>第 3 轮</b> LP 233，页面再也找不到被违反的覆盖割。整数最优是 234，还剩 1 秒的差距，这一点留给分支。</p>
+        <p><b>树小了一半以上。</b>不加割，分支定界要访问 55 个节点；把这 4 条割加进每个节点的 LP 之后，只要 23 个。割没有解决问题，但让每个节点的上界更紧，更早剪枝。求解器的日志里“根节点上加了多少割、下界从多少涨到多少”，就是这一步（第 4 章读日志那一节）。</p>
+        <div class="callout"><b class="t">拉格朗日松弛看同一件事</b>把载重约束乘以价格 <span class="m">λ</span><sub class="m">i</sub> ≥ 0 吸收进目标：每个任务独立地选“加价后”最便宜的车，是一个没有载重的问题，最优 <span class="m">λ</span> 给出的下界正好等于 LP 值 220（Lab 挑战里验证）。原因是松弛后的子问题有整数性，所以拉格朗日追不过 LP。覆盖割能越过 220，是因为它用到了整数性（“装不下”）这一点。这个对比在第 19 章会再用到。</div>
+      </section>

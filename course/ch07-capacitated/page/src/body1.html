@@ -1,0 +1,139 @@
+<div class="page">
+  <div class="topbar">
+    <span><b>物流调度与运筹优化</b> · 系统课程</span>
+    <span>第二部分 组合优化 · 第 7 章</span>
+  </div>
+
+  <div class="layout">
+    <nav class="toc" aria-label="本章目录">
+      <div class="toc-title">本章目录</div>
+      <ol>
+        <li><a href="#s1"><span>7.1</span><span>背包与 LP 上界</span></a></li>
+        <li><a href="#s2"><span>7.2</span><span>背包的分支定界</span></a></li>
+        <li><a href="#s3"><span>7.3</span><span>广义指派：载重让整数性消失</span></a></li>
+        <li><a href="#s4"><span>7.4</span><span>覆盖割</span></a></li>
+        <li><a href="#s5"><span>7.5</span><span>装载与启发式</span></a></li>
+        <li><a href="#s6"><span>7.6</span><span>在项目里的位置</span></a></li>
+        <li><a href="#s7"><span>7.7</span><span>小结与 Lab</span></a></li>
+        <li><a href="#s8"><span>7.8</span><span>自测</span></a></li>
+      </ol>
+      <div class="toc-note">页面里的数字全部实时计算：背包上界与动态规划、分支定界树、广义指派的 LP 与枚举、覆盖割循环、装箱回溯都由页面内置代码求解，并与暴力枚举、SciPy 和 HiGHS 逐项对拍。</div>
+    </nav>
+
+    <main>
+      <!-- ============================================================ HERO -->
+      <section class="hero">
+        <div class="eyebrow">CHAPTER 07 · 组合优化</div>
+        <h1><span class="no">7</span>带容量的指派与背包：LP 不再自带整数解</h1>
+        <p class="sub">第 5、6 章的问题都有一个共同点：约束矩阵全单模，LP 直接给整数解。这一章给车加上载重上限，第一次碰到例外。约束里出现了 0 和 1 以外的系数，LP 开始给出分数解，我们回到第 4 章的分支定界和割平面，看它们怎样在一个具体的问题上工作。</p>
+        <div class="hero-grid">
+          <div class="card">
+            <h3>学完本章，你能</h3>
+            <ol class="goals">
+              <li>写出 0-1 背包的 LP 上界（Dantzig 上界），说明它为什么至多一个分数变量，以及为什么上界向下取整仍然不是答案。</li>
+              <li>手写带 LP 上界的分支定界，读懂一棵搜索树：分支、剪枝、更新最好解。</li>
+              <li>把“车有载重上限”的派车写成广义指派（GAP），说明载重约束怎样破坏整数性，以及载重大到不起作用时整数性怎样回来。</li>
+              <li>从 LP 解里分离覆盖割，看割怎样把根节点的下界拉近整数最优、缩小搜索树；用装载（装箱）的例子理解启发式和最优的差距。</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>本章信息</h3>
+            <dl class="meta">
+              <div><dt>用时</dt><dd>阅读与交互 80–110 分钟，Lab 3 小时左右</dd></div>
+              <div><dt>前置</dt><dd>第 4 章（LP 松弛、分支定界、割平面）、第 5、6 章（全单模、指派、网络流）。会读 Python 代码。</dd></div>
+              <div><dt>对拍</dt><dd><span class="mono" id="envline"></span>；本章的算法由页面内置代码实现，不依赖求解器。</dd></div>
+              <div><dt>配套</dt><dd>Lab 代码包：5 个练习 + 1 个挑战，含手写的背包分支定界、覆盖割循环，pytest 自动判分</dd></div>
+            </dl>
+          </div>
+        </div>
+        <div class="roadmap" aria-label="课程路线">
+          <div><b>PART 1</b>数学规划基础</div>
+          <div class="now"><b>PART 2</b>组合优化</div>
+          <div><b>PART 3</b>调度理论</div>
+          <div><b>PART 4</b>路径与波次</div>
+          <div><b>PART 5</b>大规模方法</div>
+          <div><b>PART 6</b>启发式</div>
+          <div><b>PART 7</b>多智能体时空规划</div>
+          <div><b>PART 8</b>动态与不确定</div>
+        </div>
+        <div class="roadmap-cap">第二部分 组合优化：指派问题与匈牙利算法 → 最短路与网络流 → <b>带容量的指派与背包（本章）</b>→ 旅行商与车辆路径入门。</div>
+      </section>
+
+      <!-- ============================================================ 7.1 -->
+      <section class="chap" id="s1">
+        <h2 class="sec"><span class="no">7.1</span>背包与 LP 上界</h2>
+        <p class="lead">先看最简单的“容量”问题。一辆车这一趟最多载 22 个重量单位，有 8 个托盘等着上车，每个托盘有一个价值（比如紧急程度）和一个重量。装哪几个，总价值最大？</p>
+        <p>这是 0-1 背包。设 <span class="m">x</span><sub class="m">j</sub> 为 1 表示装第 <span class="m">j</span> 个托盘：</p>
+        <div class="formula one">
+          <span class="k">背包</span><span class="e">max Σ<sub>j</sub> <i>v</i><sub>j</sub><i>x</i><sub>j</sub>,　Σ<sub>j</sub> <i>w</i><sub>j</sub><i>x</i><sub>j</sub> ≤ <i>Q</i>,　<i>x</i><sub>j</sub> ∈ {0, 1}</span><span class="n">只有一行约束，但系数是 <i>w</i><sub>j</sub></span>
+        </div>
+        <p>只有一行约束，为什么难？因为系数 <span class="m">w</span><sub class="m">j</sub> 是任意的整数，不再是第 5、6 章的“每列一个 +1 一个 −1”。约束矩阵没有全单模的结构，LP 松弛的顶点不必是整数。</p>
+        <p>但这个 LP 好解得出奇。把托盘按<b>价值/重量</b>从大到小排好，依次装，装到某一个装不下为止；再把它装进去一部分，正好装满。这就是 LP 的最优解（Dantzig，1957），它的值叫 <b>Dantzig 上界</b>。它有两个性质：</p>
+        <ol class="steps">
+          <li><b>至多一个分数变量。</b>只有一行约束，LP 的顶点至多有一个变量落在 0 和 1 之间，其余都在边界上。这个分数变量就是“装到一半”的那个托盘。</li>
+          <li><b>是整数最优的上界，但不一定紧。</b>整数解也满足 LP 的约束，所以 LP 值 ≥ 整数最优。价值是整数时，上界还可以向下取整，但取整之后仍然可能比最优大。</li>
+        </ol>
+        <p>整数最优可以用<b>动态规划</b>精确求：<span class="m">dp</span>[<span class="m">i</span>][<span class="m">c</span>] 表示前 <span class="m">i</span> 个托盘、载重 <span class="m">c</span> 时的最大价值，一个托盘要么装要么不装，<span class="m">O</span>(<span class="m">n Q</span>) 时间。它是<b>伪多项式</b>的：载重每多一位数字，时间乘以 10。载重是几十、几百的托盘数时很好用；载重是毫米或克的时候就不行了。</p>
+
+        <div class="predict" id="p1"></div>
+
+        <figure class="fig wide gatehost" id="fig1">
+          <div class="fig-body">
+            <div class="fig-toolbar">
+              <span class="label">载重 <span class="m">Q</span> = <b id="kbCapV" style="font-family:var(--mono);color:var(--hot-strong)"></b></span>
+              <input type="range" id="kbCap" min="8" max="40" step="1" value="22" aria-label="载重" style="width:16rem">
+            </div>
+            <div class="statrow" id="kbStats"></div>
+            <div class="twocol">
+              <div>
+                <svg class="kb" id="kbSvg" role="img" aria-label="背包：LP 解与整数最优"></svg>
+                <div class="lgd"><span><i></i>LP 装满的托盘</span><span><i class="hot"></i>被截断的那个（LP 只装一部分）</span><span><i class="gray"></i>装不下</span><span><i class="good"></i>整数最优</span></div>
+                <div class="saybox" id="kbSay"></div>
+              </div>
+              <div class="tbl-wrap"><table class="lbt" id="kbTable" aria-label="托盘"></table></div>
+            </div>
+          </div>
+          <figcaption><b>图 7-1</b>背包的 LP 上界。托盘按价值/重量从大到小排开，方块的宽度是重量，里面写着“价值 / 重量”。上一行是 LP 的解：一直装到载重线，被线截断的那个只装一部分（橙色）。下一行是整数最优（动态规划）。拖动载重看两者的关系。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>默认载重 22：</b>价值/重量最高的四个托盘 T4、T8、T1、T7 合计重量 20，价值 104。剩下的 2 个重量单位，LP 用来装 T6 的 2/7，多得 2.86，上界 106.86。整数最优就是这四个托盘，价值 104，恰好是“舍掉分数变量”的结果。</p>
+        <p><b>拖到 26：</b>LP 上界 112.57：四个托盘装 20，再装 T6 的 6/7。整数最优 111，是把分数的 T6 换成整个的 T5（价值 7、重量 6），正好把载重 26 装满。单是舍掉分数变量只有 104，差了 7。<b>整数最优不一定是 LP 解的舍入</b>，这是背包难的地方。</p>
+        <p><b>拖到 20：</b>四个托盘正好装满，LP 没有分数变量，上界等于整数最优。这时问题恰好是“容易”的，但只是因为数据凑巧。</p>
+      </section>
+
+      <!-- ============================================================ 7.2 -->
+      <section class="chap" id="s2">
+        <h2 class="sec"><span class="no">7.2</span>背包的分支定界</h2>
+        <p class="lead">第 4 章讲过分支定界的原理：用 LP 的值当上界，在分数变量上分支，把子问题的上界和手上最好的整数解比较，没有希望的分支直接剪掉。背包正好可以把它完整地写出来，因为每个节点的 LP 都是一次排序加一次扫描。</p>
+        <ol class="steps">
+          <li><b>节点</b>：一组已经决定的托盘（装或者不装）。它的<b>上界</b>是剩下的托盘在剩余载重下的 Dantzig 上界，加上已装托盘的价值。</li>
+          <li><b>剪枝</b>：价值是整数，所以上界向下取整 ≤ 手上最好的整数解时，这一支不可能更好，不用再看。必装的托盘已经超载，这一支作废。</li>
+          <li><b>整数解</b>：LP 解没有分数变量，这一支已经解完，更新最好的整数解。</li>
+          <li><b>分支</b>：否则在 LP 解里那个分数变量上分成两支：装它、不装它。这里深度优先，先试“装”。</li>
+        </ol>
+        <p>搜索树的大小取决于上界有多紧、最好的整数解找到得多早。8 个托盘完全枚举要看 511 个节点，加上上界剪枝之后只有十几个。</p>
+
+        <figure class="fig wide" id="fig2">
+          <div class="fig-body">
+            <div class="flags" id="btFlags"></div>
+            <svg class="tree" id="btSvg" role="img" aria-label="分支定界搜索树"></svg>
+            <div class="lgd"><span><i></i>继续分支</span><span><i class="gray"></i>剪枝</span><span><i class="good"></i>整数解</span><span><i class="bad"></i>作废</span></div>
+            <div class="stepper">
+              <button class="btn" id="btPrev" type="button">◀ 上一步</button>
+              <button class="btn primary" id="btNext" type="button">下一个节点 ▶</button>
+              <button class="btn ghost" id="btAll" type="button">全部展开</button>
+              <button class="btn ghost" id="btReset" type="button">重来</button>
+              <span class="txt" id="btTxt"></span>
+            </div>
+            <div class="saybox" id="btSay"></div>
+          </div>
+          <figcaption><b>图 7-2</b>同一个背包（载重 22）的分支定界树。每个方框里是这个节点的 LP 上界；连线上是分支的决定（<span class="m">T6</span>=1 表示装 T6）。点“下一个节点”按深度优先的顺序逐个展开。</figcaption>
+        </figure>
+
+        <h3 class="sub">读图</h3>
+        <p><b>根节点</b>的上界是 106.86，分数变量是 T6，所以第一次分支是“装 T6”和“不装 T6”。深度优先先试装 T6。</p>
+        <p><b>“装 T6”一支的上界只有 91.5。</b>LP 原本几乎没用 T6，硬把它装进去，损失很大。这一支很快找到整数解 88，然后剩下的节点因为上界 88.17 向下取整不超过 88 被剪掉。手上有了第一个整数解 88。</p>
+        <p><b>“不装 T6”一支的上界 106.33，很有希望，继续向下。</b>接着试装 T5、不装 T5，一路下去，中间又找到 89，最后一个节点（不装 T2、不装 T3）的 LP 恰好是整数解，价值 104，与根节点的 106.86 相差 2.86。因为上界向下取整是 106，还高于 104，要把所有上界大于 104 的分支查完才敢确定 104 是最优，所以树里有十来个节点。</p>
+        <p>这与第 4 章的经验一致：<b>下界靠早点找到好解，上界靠 LP 松弛紧</b>。下一节的广义指派里，好解还比较容易靠启发式找到，难的是上界。7.4 节用覆盖割把 LP 上界收紧，就是从这一头减少节点。</p>
+      </section>
